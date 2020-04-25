@@ -1,14 +1,13 @@
+module App
+
 open Browser.Types
-#load "../.paket/load/netstandard2.0/main.group.fsx"
-
-
 open Browser.WebSocket
 open Fable.Core.JS
 
 let ws = WebSocket.Create "ws://localhost:61942"
 
 let onMessage (msg: MessageEvent) =
-    console.log(msg.data)
+    console.log (msg.data)
 
 let onOpen _ =
     ws.send "{

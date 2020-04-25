@@ -11,7 +11,7 @@ const config = (ifDev, ifProd) => ({
         mode: 'production',
         devtool: 'source-map'
     }),
-    entry: "./src/App.fsx",
+    entry: "./src/App.fsproj",
     output: {
         path: path.join(__dirname, "./dist"),
         filename: '[name].[hash].js',
