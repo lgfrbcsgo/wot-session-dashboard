@@ -1,5 +1,5 @@
 import { html, TemplateResult } from "lit-html";
-import { assertNever, ofType, Variant, variant } from "./variant";
+import { ofType, valueCreator, variantCreator } from "./variant";
 import { Dispatch, run } from "./program";
 import { map, switchMap, takeUntil } from "rxjs/operators";
 import { interval } from "rxjs";
@@ -14,30 +14,23 @@ const initialState: Model = {
     auto: false,
 };
 
-type Add = Variant<"add", number>;
-type Reset = Variant<"reset">;
-type Auto = Variant<"auto">;
-type Stop = Variant<"stop">;
+const add = valueCreator("add")<number>();
+const reset = variantCreator("reset");
+const auto = variantCreator("auto");
+const stop = variantCreator("stop");
 
-type Msg = Add | Reset | Auto | Stop;
-
-const add = (value: number): Add => variant("add", value);
-const reset = (): Reset => variant("reset");
-const auto = (): Auto => variant("auto");
-const stop = (): Stop => variant("stop");
+type Msg = ReturnType<typeof add | typeof reset | typeof auto | typeof stop>;
 
 function update(state: Model, msg: Msg): Model {
     switch (msg.type) {
-        case "add":
+        case add.type:
             return { ...state, count: Math.max(0, state.count + msg.value) };
-        case "reset":
+        case reset.type:
             return { ...state, count: 0 };
-        case "auto":
+        case auto.type:
             return { ...state, auto: true };
-        case "stop":
+        case stop.type:
             return { ...state, auto: false };
-        default:
-            return assertNever(msg);
     }
 }
 
@@ -56,10 +49,10 @@ function view(state: Model, dispatch: Dispatch<Msg>): TemplateResult {
 
 const app = run("app", initialState, update, view);
 
-const stop$ = app.messages$.pipe(ofType<Msg, Stop>("stop"));
+const stop$ = app.messages$.pipe(ofType(stop.type));
 
 const auto$ = app.messages$.pipe(
-    ofType<Msg, Auto>("auto"),
+    ofType(auto.type),
     switchMap(() =>
         interval(1000).pipe(
             takeUntil(stop$),

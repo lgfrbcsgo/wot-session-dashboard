@@ -6,33 +6,40 @@ export interface Variant<Type extends string, Value = undefined> {
     readonly value: Value;
 }
 
-export function variant<Type extends string>(type: Type): Variant<Type>;
-export function variant<Type extends string, Value>(
-    type: Type,
-    value: Value
-): Variant<Type, Value>;
-export function variant<Type extends string, Value>(
-    type: Type,
-    value?: Value
-): Variant<Type, Value | undefined> {
-    return {
-        type,
-        value,
+interface ValueBuilder<Type extends string, Value> {
+    (value: Value): Variant<Type, Value>;
+    type: Type;
+}
+
+interface VariantBuilder<Type extends string> {
+    (): Variant<Type>;
+    type: Type;
+}
+
+export function valueCreator<Type extends string>(type: Type) {
+    return <Value>(): ValueBuilder<Type, Value> => {
+        const builder = (value: Value) => ({ type, value });
+        builder.type = type;
+        return builder;
     };
 }
 
-export function assertNever(_: never): never {
-    throw Error("unreachable");
+export function variantCreator<Type extends string>(
+    type: Type
+): VariantBuilder<Type> {
+    const builder = () => ({ type, value: undefined });
+    builder.type = type;
+    return builder;
 }
 
-export function is<Sum extends Variant<any, any>, Instance extends Sum>(
-    type: Instance["type"]
-) {
-    return (sum: Sum): sum is Instance => sum.type === type;
-}
+export type GetInstance<
+    Type extends Sum["type"],
+    Sum extends Variant<any, any>
+> = Sum extends Variant<Type, infer Value> ? Variant<Type, Value> : never;
 
-export function ofType<Sum extends Variant<any, any>, Instance extends Sum>(
-    type: Instance["type"]
-): OperatorFunction<Sum, Instance> {
-    return (source) => source.pipe(filter(is<Sum, Instance>(type)));
+export function ofType<
+    Type extends Sum["type"],
+    Sum extends Variant<string, any>
+>(type: Type): OperatorFunction<Sum, GetInstance<Type, Sum>> {
+    return filter((sum: Sum) => sum.type === type) as any;
 }
