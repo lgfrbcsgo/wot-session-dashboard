@@ -52,6 +52,7 @@ export function attachToDevTools(app: App<any, any>): void {
             pause: true,
             jump: true,
         },
+        maxAge: 25,
     })
 
     devTools?.init(app.state$.value)
