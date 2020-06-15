@@ -1,27 +1,27 @@
-import { OperatorFunction } from "rxjs"
-import { filter } from "rxjs/operators"
+import {OperatorFunction} from "rxjs"
+import {filter} from "rxjs/operators"
 
 export interface Variant<Type extends string, Value = undefined> {
     readonly type: Type
     readonly value: Value
 }
 
-interface ValueBuilder<Type extends string, Value> {
+export interface ValueBuilder<Type extends string, Value> {
     (value: Value): Variant<Type, Value>
     type: Type
 }
 
-interface TokenBuilder<Type extends string> {
+export interface TokenBuilder<Type extends string> {
     (): Variant<Type>
     type: Type
 }
 
-export function taggedValue<Type extends string>(type: Type) {
-    return <Value>(): ValueBuilder<Type, Value> => {
-        const builder = (value: Value) => ({ type, value })
-        builder.type = type
-        return builder
-    }
+export function taggedValue<Type extends string, Value>(
+    type: Type,
+): ValueBuilder<Type, Value> {
+    const builder = (value: Value) => ({ type, value })
+    builder.type = type
+    return builder
 }
 
 export function taggedToken<Type extends string>(
