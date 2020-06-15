@@ -2,6 +2,7 @@ import { BehaviorSubject, Subject } from "rxjs"
 import {
     debounceTime,
     distinctUntilChanged,
+    map,
     scan,
     tap,
     withLatestFrom,
@@ -33,22 +34,16 @@ export function run<Model, Msg>(
     update$.subscribe(state$)
 
     const mount = document.getElementById(elementId)
+    const dispatch = (msg: Msg) => messages$.next(msg)
     const render$ = state$.pipe(
         debounceTime(0),
         distinctUntilChanged(),
-        tap((state) => {
-            render(
-                view(state, (msg) => messages$.next(msg)),
-                mount!,
-            )
-        }),
+        map((state) => view(state, dispatch)),
+        tap((template) => render(template, mount!)),
     )
     render$.subscribe()
 
-    const app = { messages$, state$ }
-    attachToDevTools(app)
-
-    return app
+    return { messages$, state$ }
 }
 
 export function attachToDevTools(app: App<any, any>): void {

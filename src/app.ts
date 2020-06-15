@@ -1,7 +1,7 @@
 import { html, TemplateResult } from "lit-html"
 import { ofType, valueCreator, variantCreator } from "./variant"
-import { Dispatch, run } from "./program"
-import { map, switchMap, takeUntil } from "rxjs/operators"
+import { attachToDevTools, Dispatch, run } from "./program"
+import { filter, map, switchMap, takeUntil } from "rxjs/operators"
 import { interval } from "rxjs"
 
 interface Model {
@@ -48,10 +48,15 @@ function view(state: Model, dispatch: Dispatch<Msg>): TemplateResult {
 }
 
 const app = run("app", initialState, update, view)
+attachToDevTools(app)
 
 const stop$ = app.messages$.pipe(ofType(stop.type))
 
-const reset$ = app.messages$.pipe(ofType(reset.type), map(stop))
+const reset$ = app.messages$.pipe(
+    ofType(reset.type),
+    filter(() => app.state$.value.auto),
+    map(stop),
+)
 reset$.subscribe(app.messages$)
 
 const auto$ = app.messages$.pipe(
@@ -63,5 +68,4 @@ const auto$ = app.messages$.pipe(
         ),
     ),
 )
-
 auto$.subscribe(app.messages$)
