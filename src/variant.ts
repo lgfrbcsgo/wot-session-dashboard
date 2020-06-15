@@ -35,11 +35,16 @@ export function variantCreator<Type extends string>(
 export type GetInstance<
     Type extends Sum["type"],
     Sum extends Variant<any, any>
-> = Sum extends Variant<Type, infer Value> ? Variant<Type, Value> : never
+> = Sum extends Variant<Type, any>
+    ? Sum extends Variant<infer Type_, infer Value>
+        ? Variant<Type_, Value>
+        : never
+    : never
 
 export function ofType<
     Type extends Sum["type"],
     Sum extends Variant<string, any>
->(type: Type): OperatorFunction<Sum, GetInstance<Type, Sum>> {
-    return filter((sum: Sum) => sum.type === type) as any
+>(...types: Type[]): OperatorFunction<Sum, GetInstance<Type, Sum>> {
+    const typeSet = new Set<string>(types)
+    return filter((sum: Sum) => typeSet.has(sum.type)) as any
 }
