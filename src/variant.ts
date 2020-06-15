@@ -11,12 +11,12 @@ interface ValueBuilder<Type extends string, Value> {
     type: Type
 }
 
-interface VariantBuilder<Type extends string> {
+interface TokenBuilder<Type extends string> {
     (): Variant<Type>
     type: Type
 }
 
-export function valueCreator<Type extends string>(type: Type) {
+export function taggedValue<Type extends string>(type: Type) {
     return <Value>(): ValueBuilder<Type, Value> => {
         const builder = (value: Value) => ({ type, value })
         builder.type = type
@@ -24,9 +24,9 @@ export function valueCreator<Type extends string>(type: Type) {
     }
 }
 
-export function variantCreator<Type extends string>(
+export function taggedToken<Type extends string>(
     type: Type,
-): VariantBuilder<Type> {
+): TokenBuilder<Type> {
     const builder = () => ({ type, value: undefined })
     builder.type = type
     return builder

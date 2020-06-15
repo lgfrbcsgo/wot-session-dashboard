@@ -1,5 +1,5 @@
 import { html, TemplateResult } from "lit-html"
-import { ofType, valueCreator, variantCreator } from "./variant"
+import { ofType, taggedValue, taggedToken } from "./variant"
 import { attachToDevTools, Dispatch, run } from "./program"
 import { filter, map, switchMap, takeUntil } from "rxjs/operators"
 import { interval } from "rxjs"
@@ -14,10 +14,10 @@ const initialState: Model = {
     auto: false,
 }
 
-const add = valueCreator("add")<number>()
-const reset = variantCreator("reset")
-const auto = variantCreator("auto")
-const stop = variantCreator("stop")
+const add = taggedValue("add")<number>()
+const reset = taggedToken("reset")
+const auto = taggedToken("auto")
+const stop = taggedToken("stop")
 
 type Msg = ReturnType<typeof add | typeof reset | typeof auto | typeof stop>
 
