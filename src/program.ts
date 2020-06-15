@@ -1,10 +1,10 @@
-import { BehaviorSubject, Subject } from "rxjs"
+import { animationFrameScheduler, BehaviorSubject, Subject } from "rxjs"
 import {
-    debounceTime,
     distinctUntilChanged,
     map,
     scan,
     tap,
+    throttleTime,
 } from "rxjs/operators"
 import { render, TemplateResult } from "lit-html"
 
@@ -35,7 +35,7 @@ export function run<Model, Msg>(
     const mount = document.getElementById(elementId)
     const dispatch = (msg: Msg) => messages$.next(msg)
     const render$ = state$.pipe(
-        debounceTime(0),
+        throttleTime(0, animationFrameScheduler, { trailing: true }),
         distinctUntilChanged(),
         map((state) => view(state, dispatch)),
         tap((template) => render(template, mount!)),
