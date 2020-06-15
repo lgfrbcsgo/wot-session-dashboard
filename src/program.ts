@@ -1,5 +1,11 @@
 import { BehaviorSubject, Subject } from "rxjs"
-import { scan, withLatestFrom } from "rxjs/operators"
+import {
+    debounceTime,
+    distinctUntilChanged,
+    scan,
+    tap,
+    withLatestFrom,
+} from "rxjs/operators"
 import { render, TemplateResult } from "lit-html"
 
 export type Update<Model, Msg> = (state: Model, msg: Msg) => Model
@@ -23,15 +29,21 @@ export function run<Model, Msg>(
     const messages$ = new Subject<Msg>()
     const state$ = new BehaviorSubject(initialState)
 
-    messages$.pipe(scan(update, initialState)).subscribe(state$)
+    const update$ = messages$.pipe(scan(update, initialState))
+    update$.subscribe(state$)
 
     const mount = document.getElementById(elementId)
-    state$.subscribe((state) => {
-        render(
-            view(state, (msg) => messages$.next(msg)),
-            mount!,
-        )
-    })
+    const render$ = state$.pipe(
+        debounceTime(0),
+        distinctUntilChanged(),
+        tap((state) => {
+            render(
+                view(state, (msg) => messages$.next(msg)),
+                mount!,
+            )
+        }),
+    )
+    render$.subscribe()
 
     const app = { messages$, state$ }
     attachToDevTools(app)

@@ -51,6 +51,9 @@ const app = run("app", initialState, update, view)
 
 const stop$ = app.messages$.pipe(ofType(stop.type))
 
+const reset$ = app.messages$.pipe(ofType(reset.type), map(stop))
+reset$.subscribe(app.messages$)
+
 const auto$ = app.messages$.pipe(
     ofType(auto.type),
     switchMap(() =>
