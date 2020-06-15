@@ -1,5 +1,5 @@
-import {OperatorFunction} from "rxjs"
-import {filter} from "rxjs/operators"
+import { OperatorFunction } from "rxjs"
+import { filter } from "rxjs/operators"
 
 export interface Variant<Type extends string, Value = undefined> {
     readonly type: Type

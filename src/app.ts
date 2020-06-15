@@ -1,8 +1,8 @@
-import {html, TemplateResult} from "lit-html"
-import {ofType, taggedToken, taggedValue} from "./variant"
-import {App, attachToDevTools, Dispatch, run} from "./program"
-import {filter, map, switchMap, takeUntil} from "rxjs/operators"
-import {interval} from "rxjs"
+import { html, TemplateResult } from "lit-html"
+import { ofType, taggedToken, taggedValue } from "./variant"
+import { App, attachToDevTools, Dispatch, run } from "./program"
+import { filter, map, switchMap, takeUntil } from "rxjs/operators"
+import { interval } from "rxjs"
 
 interface Model {
     readonly count: number
