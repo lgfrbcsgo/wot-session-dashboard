@@ -5,7 +5,6 @@ import {
     map,
     scan,
     tap,
-    withLatestFrom,
 } from "rxjs/operators"
 import { render, TemplateResult } from "lit-html"
 
@@ -62,7 +61,5 @@ export function attachToDevTools(app: App<any, any>): void {
         }
     })
 
-    app.messages$
-        .pipe(withLatestFrom(app.state$))
-        .subscribe(([msg, state]) => devTools.send(msg, state))
+    app.messages$.subscribe((msg) => devTools.send(msg, app.state$.value))
 }
