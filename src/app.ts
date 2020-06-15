@@ -1,6 +1,6 @@
 import { html, TemplateResult } from "lit-html"
 import { ofType, taggedValue, taggedToken } from "./variant"
-import { attachToDevTools, Dispatch, run } from "./program"
+import { App, attachToDevTools, Dispatch, run } from "./program"
 import { filter, map, switchMap, takeUntil } from "rxjs/operators"
 import { interval } from "rxjs"
 
@@ -47,25 +47,30 @@ function view(state: Model, dispatch: Dispatch<Msg>): TemplateResult {
     `
 }
 
+function withStopOnReset({ messages$, state$ }: App<Model, Msg>) {
+    const reset$ = messages$.pipe(
+        ofType(reset.type),
+        filter(() => state$.value.auto),
+        map(stop),
+    )
+    reset$.subscribe(messages$)
+}
+
+function withAutoIncrement({ messages$ }: App<Model, Msg>) {
+    const stop$ = messages$.pipe(ofType(stop.type))
+    const auto$ = messages$.pipe(
+        ofType(auto.type),
+        switchMap(() =>
+            interval(1000).pipe(
+                takeUntil(stop$),
+                map(() => add(1)),
+            ),
+        ),
+    )
+    auto$.subscribe(messages$)
+}
+
 const app = run("app", initialState, update, view)
 attachToDevTools(app)
-
-const stop$ = app.messages$.pipe(ofType(stop.type))
-
-const reset$ = app.messages$.pipe(
-    ofType(reset.type),
-    filter(() => app.state$.value.auto),
-    map(stop),
-)
-reset$.subscribe(app.messages$)
-
-const auto$ = app.messages$.pipe(
-    ofType(auto.type),
-    switchMap(() =>
-        interval(1000).pipe(
-            takeUntil(stop$),
-            map(() => add(1)),
-        ),
-    ),
-)
-auto$.subscribe(app.messages$)
+withAutoIncrement(app)
+withStopOnReset(app)
