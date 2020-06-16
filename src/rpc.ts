@@ -84,6 +84,7 @@ export function notificationDecoder<Method extends string, Params>(
 ): D.Decoder<Notification<Method, Params>> {
     return D.compose(($) => {
         $(versionDecoder)
+        $(D.field("id", D.fail("Notifications must not have an id.")))
         return notification({
             method: $(D.field("method", D.literal(method))),
             params: $(D.field("params", paramsDecoder)),
