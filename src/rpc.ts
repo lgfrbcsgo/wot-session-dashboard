@@ -30,10 +30,9 @@ export type Request<Method extends string = string, Params = any> = Variant<
     }
 >
 
-export type BatchRequest<T extends Notification | Request> = Variant<
-    typeof batchRequest.type,
-    T[]
->
+export type BatchRequest<
+    T extends Notification | Request = Notification | Request
+> = Variant<typeof batchRequest.type, T[]>
 
 export type Response<Result = any> = Variant<
     typeof response.type,
@@ -57,7 +56,7 @@ export type ErrorResponse = Variant<
     }
 >
 
-export type BatchResponse<T extends Response> = Variant<
+export type BatchResponse<T extends Response = Response> = Variant<
     typeof batchResponse.type,
     (T | ErrorResponse)[]
 >
@@ -157,4 +156,43 @@ export function serverMessageDecoder<
         batchResponseDecoder(responseDecoder),
         batchRequestDecoder(notificationDecoder),
     )
+}
+
+export function encodeNotification(notification: Notification) {
+    return {
+        jsonrpc: "2.0",
+        method: notification.value.method,
+        params: notification.value.params,
+    }
+}
+
+export function encodeRequest(request: Request) {
+    return {
+        jsonrpc: "2.0",
+        method: request.value.method,
+        params: request.value.params,
+        id: request.value.id,
+    }
+}
+
+export function encodeBatchRequest(batch: BatchRequest) {
+    return batch.value.map((notificationOrRequest) => {
+        switch (notificationOrRequest.type) {
+            case notification.type:
+                return encodeNotification(notificationOrRequest)
+            case request.type:
+                return encodeRequest(notificationOrRequest)
+        }
+    })
+}
+
+export function encodeClientMessage(message: ClientMessage) {
+    switch (message.type) {
+        case notification.type:
+            return encodeNotification(message)
+        case request.type:
+            return encodeRequest(message)
+        case batchRequest.type:
+            return encodeBatchRequest(message)
+    }
 }
