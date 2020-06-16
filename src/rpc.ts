@@ -106,7 +106,7 @@ export function responseDecoder<Result>(
 const errorDetailDecoder = D.compose<ErrorDetail>(($) => ({
     code: $(D.field("code", D.number())),
     message: $(D.field("message", D.string())),
-    data: $(D.field("data", D.any())),
+    data: $(D.optionalField("data", D.any())),
 }))
 
 const errorResponseDecoder = D.compose<ErrorResponse>(($) => {
