@@ -48,28 +48,27 @@ const responseDecoder: D.Decoder<Response> = D.compose(($) => ({
     id: $(D.field("id", idDecoder)),
 }))
 
+export interface RpcError {
+    code: number
+    message: string
+    data?: any
+}
+
+const rpcErrorDecoder: D.Decoder<RpcError> = D.compose(($) => ({
+    code: $(D.field("code", D.number())),
+    message: $(D.field("message", D.string())),
+    data: $(D.optionalField("data", D.any())),
+}))
+
 export interface ErrorResponse {
     jsonrpc: Version
-    error: {
-        code: number
-        message: string
-        data?: any
-    }
+    error: RpcError
     id: Id
 }
 
 const errorResponseDecoder: D.Decoder<ErrorResponse> = D.compose(($) => ({
     jsonrpc: $(D.field("jsonrpc", versionDecoder)),
-    error: $(
-        D.field(
-            "error",
-            D.compose(($) => ({
-                code: $(D.field("code", D.number())),
-                message: $(D.field("message", D.string())),
-                data: $(D.optionalField("data", D.any())),
-            })),
-        ),
-    ),
+    error: $(D.field("error", rpcErrorDecoder)),
     id: $(D.field("id", idDecoder)),
 }))
 
