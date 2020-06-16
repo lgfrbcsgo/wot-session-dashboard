@@ -174,11 +174,7 @@ export function array<T>(decoder: Decoder<T>): Decoder<T[]> {
     })
 }
 
-type OneOf<T extends Decoder<any>[]> = T extends Decoder<infer U>[] ? U : never
-
-export function oneOf<T extends Decoder<any>[]>(
-    ...decoders: T
-): Decoder<OneOf<T>> {
+export function oneOf<T>(...decoders: Decoder<T>[]): Decoder<T> {
     return (value, path) => {
         const errors: DecodeError[] = []
         for (const decoder of decoders) {

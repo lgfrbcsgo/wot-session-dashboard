@@ -1,107 +1,159 @@
-import { OperatorFunction } from "rxjs"
-import { webSocket } from "rxjs/webSocket"
-import { map } from "rxjs/operators"
 import * as D from "./decoder"
+import { Variant, variantCreator } from "./variant"
 
-export type Version = "2.0"
-const versionDecoder: D.Decoder<Version> = D.literal("2.0")
+export const notification = variantCreator("notification")
+export const request = variantCreator("request")
+export const batchRequest = variantCreator("batch-request")
+export const response = variantCreator("response")
+export const errorResponse = variantCreator("error-response")
+export const batchResponse = variantCreator("batch-response")
 
 export type Id = null | number | string
-const idDecoder: D.Decoder<Id> = D.oneOf(
-    D.string(),
-    D.number(),
-    D.literal(null),
-)
 
-export interface Notification<Method extends string = string, Params = any> {
-    jsonrpc: Version
-    method: Method
-    params: Params
-}
+export type Notification<
+    Method extends string = string,
+    Params = any
+> = Variant<
+    typeof notification.type,
+    {
+        method: Method
+        params: Params
+    }
+>
 
-const notificationDecoder: D.Decoder<Notification> = D.compose(($) => ({
-    jsonrpc: $(D.field("jsonrpc", versionDecoder)),
-    method: $(D.field("method", D.string())),
-    params: $(D.field("params", D.any())),
-}))
+export type Request<Method extends string = string, Params = any> = Variant<
+    typeof request.type,
+    {
+        method: Method
+        params: Params
+        id: Id
+    }
+>
 
-export interface Request<Method extends string = string, Params = any> {
-    jsonrpc: Version
-    method: Method
-    params: Params
-    id: Id
-}
+export type BatchRequest<T extends Notification | Request> = Variant<
+    typeof batchRequest.type,
+    T[]
+>
 
-export type ClientMsg<
-    T extends Notification | Request = Notification | Request
-> = T | T[]
+export type Response<Result = any> = Variant<
+    typeof response.type,
+    {
+        result: Result
+        id: Id
+    }
+>
 
-export interface Response<Result = any> {
-    jsonrpc: Version
-    result: Result
-    id: Id
-}
-
-const responseDecoder: D.Decoder<Response> = D.compose(($) => ({
-    jsonrpc: $(D.field("jsonrpc", versionDecoder)),
-    result: $(D.field("result", D.any())),
-    id: $(D.field("id", idDecoder)),
-}))
-
-export interface RpcError {
+export interface ErrorDetail {
     code: number
     message: string
     data?: any
 }
 
-const rpcErrorDecoder: D.Decoder<RpcError> = D.compose(($) => ({
-    code: $(D.field("code", D.number())),
-    message: $(D.field("message", D.string())),
-    data: $(D.optionalField("data", D.any())),
-}))
+export type ErrorResponse = Variant<
+    typeof errorResponse.type,
+    {
+        error: ErrorDetail
+        id: Id
+    }
+>
 
-export interface ErrorResponse {
-    jsonrpc: Version
-    error: RpcError
-    id: Id
-}
+export type BatchResponse<T extends Response> = Variant<
+    typeof batchResponse.type,
+    (T | ErrorResponse)[]
+>
 
-const errorResponseDecoder: D.Decoder<ErrorResponse> = D.compose(($) => ({
-    jsonrpc: $(D.field("jsonrpc", versionDecoder)),
-    error: $(D.field("error", rpcErrorDecoder)),
-    id: $(D.field("id", idDecoder)),
-}))
+export type ClientMessage<
+    T extends Notification | Request = Notification | Request
+> = T | BatchRequest<T>
 
-export type ServerMsg<
-    T extends Response | ErrorResponse | Notification =
-        | Response
-        | ErrorResponse
-        | Notification
-> = T | T[]
+export type ServerMessage<
+    Resp extends Response = Response,
+    Not extends Notification = Notification
+> = Resp | BatchResponse<Resp> | Not | BatchRequest<Not> | ErrorResponse
 
-const serverMsgDecoder: D.Decoder<ServerMsg> = D.oneOf(
-    notificationDecoder,
-    responseDecoder,
-    errorResponseDecoder,
-    D.array(
-        D.oneOf(notificationDecoder, responseDecoder, errorResponseDecoder),
-    ),
+const versionDecoder = D.field("jsonrpc", D.literal("2.0"))
+
+const idDecoder = D.field(
+    "id",
+    D.oneOf<Id>(D.string(), D.number(), D.literal(null)),
 )
 
-export function rpcChannel(
-    webSocketUrl: string,
-): OperatorFunction<ClientMsg, ServerMsg> {
-    return (source$) => {
-        const messages$ = source$.pipe(map((msg) => JSON.stringify(msg)))
+export function notificationDecoder<Method extends string, Params>(
+    method: Method,
+    paramsDecoder: D.Decoder<Params>,
+): D.Decoder<Notification<Method, Params>> {
+    return D.compose(($) => {
+        $(versionDecoder)
+        return notification({
+            method: $(D.field("method", D.literal(method))),
+            params: $(D.field("params", paramsDecoder)),
+        })
+    })
+}
 
-        const webSocket$ = webSocket<string>(webSocketUrl)
-        messages$.subscribe(webSocket$)
+export function responseDecoder<Result>(
+    resultDecoder: D.Decoder<Result>,
+): D.Decoder<Response<Result>> {
+    return D.compose(($) => {
+        $(versionDecoder)
+        return response({
+            result: $(D.field("result", resultDecoder)),
+            id: $(idDecoder),
+        })
+    })
+}
 
-        return webSocket$.pipe(
-            map((data) => {
-                const msg = JSON.parse(data)
-                return D.decode(serverMsgDecoder, msg)
-            }),
+const errorDetailDecoder = D.compose<ErrorDetail>(($) => ({
+    code: $(D.field("code", D.number())),
+    message: $(D.field("message", D.string())),
+    data: $(D.field("data", D.any())),
+}))
+
+const errorResponseDecoder = D.compose<ErrorResponse>(($) => {
+    $(versionDecoder)
+    return errorResponse({
+        error: $(D.field("error", errorDetailDecoder)),
+        id: $(idDecoder),
+    })
+})
+
+function batchResponseDecoder<T extends Response>(
+    responseDecoder: D.Decoder<T>,
+): D.Decoder<BatchResponse<T>> {
+    return D.compose(($) => {
+        const responses = $(
+            D.array(
+                D.oneOf<ErrorResponse | T>(
+                    errorResponseDecoder,
+                    responseDecoder,
+                ),
+            ),
         )
-    }
+        return batchResponse(responses)
+    })
+}
+
+function batchRequestDecoder<T extends Notification | Request>(
+    requestDecoder: D.Decoder<T>,
+): D.Decoder<BatchRequest<T>> {
+    return D.compose(($) => {
+        const requests = $(D.array(requestDecoder))
+        return batchRequest(requests)
+    })
+}
+
+export function serverMessageDecoder<
+    Resp extends Response,
+    Not extends Notification
+>(
+    responseDecoder: D.Decoder<Resp>,
+    notificationDecoder: D.Decoder<Not>,
+): D.Decoder<ServerMessage<Resp, Not>> {
+    return D.oneOf<ServerMessage<Resp, Not>>(
+        errorResponseDecoder,
+        responseDecoder,
+        notificationDecoder,
+        batchResponseDecoder(responseDecoder),
+        batchRequestDecoder(notificationDecoder),
+    )
 }
