@@ -1,8 +1,8 @@
-import { html, TemplateResult } from "lit-html"
-import { ofType, taggedToken, taggedValue } from "./variant"
-import { App, attachToDevTools, Dispatch, run } from "./program"
-import { filter, map, switchMap, takeUntil } from "rxjs/operators"
-import { interval } from "rxjs"
+import {html, TemplateResult} from "lit-html"
+import {ofType, Variant, variantCreator} from "./variant"
+import {App, attachToDevTools, Dispatch, run} from "./program"
+import {filter, map, switchMap, takeUntil} from "rxjs/operators"
+import {interval} from "rxjs";
 
 interface Model {
     readonly count: number
@@ -14,12 +14,16 @@ const initialState: Model = {
     auto: false,
 }
 
-const add = taggedValue<"add", number>("add")
-const reset = taggedToken("reset")
-const auto = taggedToken("auto")
-const stop = taggedToken("stop")
+const add = variantCreator("add")
+const reset = variantCreator("reset")
+const auto = variantCreator("auto")
+const stop = variantCreator("stop")
 
-type Msg = ReturnType<typeof add | typeof reset | typeof auto | typeof stop>
+type Msg =
+    | Variant<typeof add.type, number>
+    | Variant<typeof reset.type>
+    | Variant<typeof auto.type>
+    | Variant<typeof stop.type>
 
 function update(state: Model, msg: Msg): Model {
     switch (msg.type) {
@@ -51,7 +55,7 @@ function withStopOnReset({ messages$, state$ }: App<Model, Msg>) {
     const reset$ = messages$.pipe(
         ofType(reset.type),
         filter(() => state$.value.auto),
-        map(stop),
+        map(() => stop()),
     )
     reset$.subscribe(messages$)
 }

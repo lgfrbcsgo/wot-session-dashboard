@@ -6,28 +6,16 @@ export interface Variant<Type extends string, Value = undefined> {
     readonly value: Value
 }
 
-export interface ValueBuilder<Type extends string, Value> {
-    (value: Value): Variant<Type, Value>
-    type: Type
-}
-
-export interface TokenBuilder<Type extends string> {
+export interface VariantBuilder<Type extends string> {
     (): Variant<Type>
+    <Value>(value: Value): Variant<Type, Value>
     type: Type
 }
 
-export function taggedValue<Type extends string, Value>(
+export function variantCreator<Type extends string>(
     type: Type,
-): ValueBuilder<Type, Value> {
-    const builder = (value: Value) => ({ type, value })
-    builder.type = type
-    return builder
-}
-
-export function taggedToken<Type extends string>(
-    type: Type,
-): TokenBuilder<Type> {
-    const builder = () => ({ type, value: undefined })
+): VariantBuilder<Type> {
+    const builder = <Value>(value?: Value) => ({ type, value })
     builder.type = type
     return builder
 }
