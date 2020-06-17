@@ -19,7 +19,7 @@ export type Lift<Type extends string> = <Value>(
     value: Value,
 ) => Variant<Type, Value>
 
-export function genericVariantCreator<
+export function genericVariant<
     Type extends string,
     ValueCreator extends (...args: any[]) => any
 >(
@@ -32,11 +32,11 @@ export function genericVariantCreator<
     }
 }
 
-export function variantCreator<Type extends string, Args extends any[], Ret>(
+export function variant<Type extends string, Args extends any[], Ret>(
     type: Type,
     valueCreator: (...args: Args) => Ret,
 ) {
-    return genericVariantCreator(type, (lift) => (...args: Args) =>
+    return genericVariant(type, (lift) => (...args: Args) =>
         lift(valueCreator(...args)),
     )
 }

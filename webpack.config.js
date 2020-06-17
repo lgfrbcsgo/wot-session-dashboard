@@ -22,7 +22,7 @@ const config = (ifDev, ifProd) => ({
         port: 8080,
         historyApiFallback: true,
     },
-    entry: "./src/app.ts",
+    entry: "./src/main.ts",
     resolve: {
         extensions: [".ts", ".js"],
     },

@@ -1,5 +1,5 @@
 import * as D from "./decoder"
-import { Variant, genericVariantCreator } from "../variant"
+import { Variant, genericVariant } from "../variant"
 
 export type Id = null | number | string
 
@@ -14,7 +14,7 @@ export type Notification<
     }
 >
 
-export const Notification = genericVariantCreator(
+export const Notification = genericVariant(
     "notification",
     (lift) => <Method extends string, Params>(
         method: Method,
@@ -31,12 +31,12 @@ export type Request<Method extends string = string, Params = any> = Variant<
     }
 >
 
-export const Request = genericVariantCreator(
+export const Request = genericVariant(
     "request",
     (lift) => <Method extends string, Params>(
+        id: Id,
         method: Method,
         params: Params,
-        id: Id,
     ): Request<Method, Params> => lift({ method, params, id }),
 )
 
@@ -44,7 +44,7 @@ export type BatchRequest<
     T extends Notification | Request = Notification | Request
 > = Variant<"batch-request", { requests: T[] }>
 
-export const BatchRequest = genericVariantCreator(
+export const BatchRequest = genericVariant(
     "batch-request",
     (lift) => <T extends Notification | Request>(
         requests: T[],
@@ -59,7 +59,7 @@ export type Response = Variant<
     }
 >
 
-export const Response = genericVariantCreator(
+export const Response = genericVariant(
     "response",
     (lift) => (result: unknown, id: Id): Response => lift({ result, id }),
 )
@@ -78,7 +78,7 @@ export type ErrorResponse = Variant<
     }
 >
 
-export const ErrorResponse = genericVariantCreator(
+export const ErrorResponse = genericVariant(
     "error-response",
     (lift) => (error: ErrorDetail, id: Id): ErrorResponse =>
         lift({ error, id }),
@@ -89,7 +89,7 @@ export type BatchResponse = Variant<
     { responses: (Response | ErrorResponse)[] }
 >
 
-export const BatchResponse = genericVariantCreator(
+export const BatchResponse = genericVariant(
     "batch-response",
     (lift) => (responses: (Response | ErrorResponse)[]): BatchResponse =>
         lift({ responses }),
