@@ -45,7 +45,7 @@ export type Response = Variant<
 export interface ErrorDetail {
     code: number
     message: string
-    data?: any
+    data?: unknown
 }
 
 export type ErrorResponse = Variant<
