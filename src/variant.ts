@@ -1,9 +1,8 @@
 import { OperatorFunction } from "rxjs"
 import { filter } from "rxjs/operators"
 
-export interface Variant<Type extends string, Value = undefined> {
+export type Variant<Type extends string, Value> = Readonly<Value> & {
     readonly type: Type
-    readonly value: Value
 }
 
 export interface VariantBuilder<
@@ -28,7 +27,7 @@ export function genericVariantCreator<
     valueCreatorFactory: (lift: Lift<Type>) => ValueCreator,
 ): VariantBuilder<Type, ValueCreator> {
     return {
-        create: valueCreatorFactory((value) => ({ type, value })),
+        create: valueCreatorFactory((value) => ({ type, ...value })),
         type,
     }
 }
@@ -42,7 +41,7 @@ export function variantCreator<Type extends string, Args extends any[], Ret>(
     )
 }
 
-export const none = () => undefined
+export const none = () => ({})
 
 export type GetInstance<
     Type extends Sum["type"],

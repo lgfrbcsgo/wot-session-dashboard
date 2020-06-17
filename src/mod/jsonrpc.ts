@@ -7,7 +7,7 @@ export type Notification<
     Method extends string = string,
     Params = any
 > = Variant<
-    typeof Notification.type,
+    "notification",
     {
         method: Method
         params: Params
@@ -23,7 +23,7 @@ export const Notification = genericVariantCreator(
 )
 
 export type Request<Method extends string = string, Params = any> = Variant<
-    typeof Request.type,
+    "request",
     {
         method: Method
         params: Params
@@ -42,17 +42,17 @@ export const Request = genericVariantCreator(
 
 export type BatchRequest<
     T extends Notification | Request = Notification | Request
-> = Variant<typeof BatchRequest.type, T[]>
+> = Variant<"batch-request", { requests: T[] }>
 
 export const BatchRequest = genericVariantCreator(
     "batch-request",
     (lift) => <T extends Notification | Request>(
         requests: T[],
-    ): BatchRequest<T> => lift(requests),
+    ): BatchRequest<T> => lift({ requests }),
 )
 
 export type Response = Variant<
-    typeof Response.type,
+    "response",
     {
         result: unknown
         id: Id
@@ -71,7 +71,7 @@ export interface ErrorDetail {
 }
 
 export type ErrorResponse = Variant<
-    typeof ErrorResponse.type,
+    "error-response",
     {
         error: ErrorDetail
         id: Id
@@ -85,14 +85,14 @@ export const ErrorResponse = genericVariantCreator(
 )
 
 export type BatchResponse = Variant<
-    typeof BatchResponse.type,
-    (Response | ErrorResponse)[]
+    "batch-response",
+    { responses: (Response | ErrorResponse)[] }
 >
 
 export const BatchResponse = genericVariantCreator(
     "batch-response",
     (lift) => (responses: (Response | ErrorResponse)[]): BatchResponse =>
-        lift(responses),
+        lift({ responses }),
 )
 
 export type ClientMessage<
@@ -193,22 +193,22 @@ export function serverMessageDecoder<Not extends Notification>(
 export function encodeNotification(notification: Notification) {
     return {
         jsonrpc: "2.0",
-        method: notification.value.method,
-        params: notification.value.params,
+        method: notification.method,
+        params: notification.params,
     }
 }
 
 export function encodeRequest(request: Request) {
     return {
         jsonrpc: "2.0",
-        method: request.value.method,
-        params: request.value.params,
-        id: request.value.id,
+        method: request.method,
+        params: request.params,
+        id: request.id,
     }
 }
 
 export function encodeBatchRequest(batch: BatchRequest) {
-    return batch.value.map((notificationOrRequest) => {
+    return batch.requests.map((notificationOrRequest) => {
         switch (notificationOrRequest.type) {
             case Notification.type:
                 return encodeNotification(notificationOrRequest)

@@ -74,17 +74,14 @@ function update(state: Model, msg: Msg): Model {
         case GotNotification.type:
             return {
                 ...state,
-                mostRecentNotification: msg.value.timestamp,
-                battleResults: [...state.battleResults, msg.value.battleResult],
+                mostRecentNotification: msg.timestamp,
+                battleResults: [...state.battleResults, msg.battleResult],
             }
         case GotBattleResults.type:
             return {
                 ...state,
-                mostRecentNotification: msg.value.timestamp,
-                battleResults: [
-                    ...state.battleResults,
-                    ...msg.value.battleResults,
-                ],
+                mostRecentNotification: msg.timestamp,
+                battleResults: [...state.battleResults, ...msg.battleResults],
             }
     }
 }
@@ -123,15 +120,12 @@ function connect(mostRecentNotification: number): Observable<Msg> {
     const didSubscribeDecoder = decodeSubscribeResult()
 
     function mapResponseToMessage(response: Response): Msg {
-        switch (response.value.id) {
-            case getBattleResults.value.id:
-                const result = decode(
-                    gotBattleResultsDecoder,
-                    response.value.result,
-                )
+        switch (response.id) {
+            case getBattleResults.id:
+                const result = decode(gotBattleResultsDecoder, response.result)
                 return GotBattleResults.create(result.end, result.battleResults)
-            case subscribe.value.id:
-                decode(didSubscribeDecoder, response.value.result)
+            case subscribe.id:
+                decode(didSubscribeDecoder, response.result)
                 return DidSubscribe.create()
             default:
                 throw new Error("Unexpected Response.")
@@ -143,24 +137,28 @@ function connect(mostRecentNotification: number): Observable<Msg> {
 
     return webSocket$.pipe(
         map((response) => decode(responseDecoder, response)),
-        mergeMap((decoded) =>
-            decoded.type === BatchRequest.type ||
-            decoded.type === BatchResponse.type
-                ? from(decoded.value)
-                : of(decoded),
-        ),
+        mergeMap((decoded) => {
+            switch (decoded.type) {
+                case BatchResponse.type:
+                    return from(decoded.responses)
+                case BatchRequest.type:
+                    return from(decoded.requests)
+                default:
+                    return of(decoded)
+            }
+        }),
         map((flattened) => {
             switch (flattened.type) {
-                case Notification.type:
-                    const result = flattened.value.params
-                    return GotNotification.create(
-                        result.timestamp,
-                        result.battleResult,
-                    )
                 case ErrorResponse.type:
                     throw new Error("Request failed.")
                 case Response.type:
                     return mapResponseToMessage(flattened)
+                case Notification.type:
+                    const result = flattened.params
+                    return GotNotification.create(
+                        result.timestamp,
+                        result.battleResult,
+                    )
             }
         }),
         catchError((error) => {
