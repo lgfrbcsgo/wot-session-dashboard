@@ -1,12 +1,12 @@
 import * as D from "./decoder"
 import { Variant, variantCreator } from "../variant"
 
-export const notification = variantCreator("notification")
-export const request = variantCreator("request")
-export const batchRequest = variantCreator("batch-request")
-export const response = variantCreator("response")
-export const errorResponse = variantCreator("error-response")
-export const batchResponse = variantCreator("batch-response")
+export const Notification = variantCreator("Notification")
+export const Request = variantCreator("Request")
+export const BatchRequest = variantCreator("batch-Request")
+export const Response = variantCreator("Response")
+export const ErrorResponse = variantCreator("error-Response")
+export const BatchResponse = variantCreator("batch-Response")
 
 export type Id = null | number | string
 
@@ -14,7 +14,7 @@ export type Notification<
     Method extends string = string,
     Params = any
 > = Variant<
-    typeof notification.type,
+    typeof Notification.type,
     {
         method: Method
         params: Params
@@ -22,7 +22,7 @@ export type Notification<
 >
 
 export type Request<Method extends string = string, Params = any> = Variant<
-    typeof request.type,
+    typeof Request.type,
     {
         method: Method
         params: Params
@@ -32,10 +32,10 @@ export type Request<Method extends string = string, Params = any> = Variant<
 
 export type BatchRequest<
     T extends Notification | Request = Notification | Request
-> = Variant<typeof batchRequest.type, T[]>
+> = Variant<typeof BatchRequest.type, T[]>
 
 export type Response = Variant<
-    typeof response.type,
+    typeof Response.type,
     {
         result: unknown
         id: Id
@@ -49,7 +49,7 @@ export interface ErrorDetail {
 }
 
 export type ErrorResponse = Variant<
-    typeof errorResponse.type,
+    typeof ErrorResponse.type,
     {
         error: ErrorDetail
         id: Id
@@ -57,7 +57,7 @@ export type ErrorResponse = Variant<
 >
 
 export type BatchResponse = Variant<
-    typeof batchResponse.type,
+    typeof BatchResponse.type,
     (Response | ErrorResponse)[]
 >
 
@@ -86,7 +86,7 @@ export function notificationDecoder<Method extends string, Params>(
     return D.compose(($) => {
         $(versionDecoder)
         $(D.optionalField("id", D.fail("Notifications must not have an id.")))
-        return notification({
+        return Notification({
             method: $(D.field("method", D.literal(method))),
             params: $(D.field("params", paramsDecoder)),
         })
@@ -97,7 +97,7 @@ export function responseDecoder(): D.Decoder<Response> {
     return D.compose(($) => {
         $(versionDecoder)
         $(D.optionalField("error", D.fail("Response must not have an error.")))
-        return response({
+        return Response({
             result: $(D.field("result", D.any())),
             id: $(idDecoder),
         })
@@ -115,10 +115,10 @@ const errorResponseDecoder = D.compose<ErrorResponse>(($) => {
     $(
         D.optionalField(
             "result",
-            D.fail("Error response must not have a result."),
+            D.fail("Error Response must not have a result."),
         ),
     )
-    return errorResponse({
+    return ErrorResponse({
         error: $(D.field("error", errorDetailDecoder)),
         id: $(idDecoder),
     })
@@ -134,7 +134,7 @@ function batchResponseDecoder(): D.Decoder<BatchResponse> {
                 ),
             ),
         )
-        return batchResponse(responses)
+        return BatchResponse(responses)
     })
 }
 
@@ -143,7 +143,7 @@ function batchRequestDecoder<T extends Notification | Request>(
 ): D.Decoder<BatchRequest<T>> {
     return D.compose(($) => {
         const requests = $(D.array(requestDecoder))
-        return batchRequest(requests)
+        return BatchRequest(requests)
     })
 }
 
@@ -179,9 +179,9 @@ export function encodeRequest(request: Request) {
 export function encodeBatchRequest(batch: BatchRequest) {
     return batch.value.map((notificationOrRequest) => {
         switch (notificationOrRequest.type) {
-            case notification.type:
+            case Notification.type:
                 return encodeNotification(notificationOrRequest)
-            case request.type:
+            case Request.type:
                 return encodeRequest(notificationOrRequest)
         }
     })
@@ -189,11 +189,11 @@ export function encodeBatchRequest(batch: BatchRequest) {
 
 export function encodeClientMessage(message: ClientMessage) {
     switch (message.type) {
-        case notification.type:
+        case Notification.type:
             return encodeNotification(message)
-        case request.type:
+        case Request.type:
             return encodeRequest(message)
-        case batchRequest.type:
+        case BatchRequest.type:
             return encodeBatchRequest(message)
     }
 }
