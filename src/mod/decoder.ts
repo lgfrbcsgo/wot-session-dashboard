@@ -1,8 +1,8 @@
-export type Decoder<T> = (value: any, path: string) => T
+export type Decoder<T> = (value: unknown, path: string) => T
 
 export class DecodeError extends Error {}
 
-export function decode<T>(decoder: Decoder<T>, value: any): T {
+export function decode<T>(decoder: Decoder<T>, value: unknown): T {
     return decoder(value, "$")
 }
 
@@ -61,7 +61,7 @@ type Primitive = string | number | boolean | null | undefined
 export function literal<T extends Primitive>(expected: T): Decoder<T> {
     return (value, path) => {
         if (value === expected) {
-            return value
+            return value as T
         } else {
             throw new DecodeError(`Expected ${path} to be ${expected}.`)
         }
@@ -70,15 +70,19 @@ export function literal<T extends Primitive>(expected: T): Decoder<T> {
 
 export type Dictionary<T> = { [key: string]: T }
 
-const rawObject: Decoder<Dictionary<any>> = (value, path) => {
-    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-        return value
+const rawObject: Decoder<Dictionary<unknown>> = (value, path) => {
+    if (
+        typeof value === "object" &&
+        value !== null &&
+        value.constructor === Object
+    ) {
+        return value as Dictionary<unknown>
     } else {
         throw new DecodeError(`Expected ${path} to be an object.`)
     }
 }
 
-const rawArray: Decoder<any[]> = (value, path) => {
+const rawArray: Decoder<unknown[]> = (value, path) => {
     if (Array.isArray(value)) {
         return value
     } else {
@@ -115,7 +119,7 @@ export function optionalField<T>(
 
 export function index<T>(idx: number, decoder: Decoder<T>): Decoder<T> {
     return (value, path) => {
-        const array = rawArray(path, value)
+        const array = rawArray(value, path)
         if (array.length > idx) {
             return decoder(array[idx], `${path}[${idx}]`)
         } else {
