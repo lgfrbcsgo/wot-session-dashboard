@@ -1,6 +1,7 @@
 import { html, TemplateResult } from "lit-html"
-import { Choice, none, variant } from "./variant"
+import { assertNever, Choice, none, variant } from "./variant"
 import { Dispatch } from "./program"
+import produce from "immer"
 
 export const Connecting = variant("connecting", none)
 export const Subscribed = variant("subscribed", none)
@@ -12,13 +13,13 @@ export type ConnectionState = Choice<
 
 export interface Model {
     readonly connectionState: ConnectionState
-    readonly mostRecentNotification: number
+    readonly mostRecentBattleResultTimestamp: number
     readonly battleResults: unknown[]
 }
 
 export const initialState: Model = {
     connectionState: Closed.create(),
-    mostRecentNotification: 0,
+    mostRecentBattleResultTimestamp: 0,
     battleResults: [],
 }
 
@@ -45,26 +46,29 @@ export type Msg = Choice<
 >
 
 export function update(state: Model, msg: Msg): Model {
-    switch (msg.type) {
-        case OpenConnection.type:
-            return { ...state, connectionState: Connecting.create() }
-        case DidSubscribe.type:
-            return { ...state, connectionState: Subscribed.create() }
-        case ConnectionClosed.type:
-            return { ...state, connectionState: Closed.create() }
-        case GotNotification.type:
-            return {
-                ...state,
-                mostRecentNotification: msg.timestamp,
-                battleResults: [...state.battleResults, msg.battleResult],
-            }
-        case GotBattleResults.type:
-            return {
-                ...state,
-                mostRecentNotification: msg.timestamp,
-                battleResults: [...state.battleResults, ...msg.battleResults],
-            }
-    }
+    return produce(state, (newState) => {
+        switch (msg.type) {
+            case OpenConnection.type:
+                newState.connectionState = Connecting.create()
+                break
+            case DidSubscribe.type:
+                newState.connectionState = Subscribed.create()
+                break
+            case ConnectionClosed.type:
+                newState.connectionState = Closed.create()
+                break
+            case GotNotification.type:
+                newState.mostRecentBattleResultTimestamp = msg.timestamp
+                newState.battleResults.push(msg.battleResult)
+                break
+            case GotBattleResults.type:
+                newState.mostRecentBattleResultTimestamp = msg.timestamp
+                newState.battleResults.push(...msg.battleResults)
+                break
+            default:
+                assertNever(msg)
+        }
+    })
 }
 
 export function view(state: Model, dispatch: Dispatch<Msg>): TemplateResult {

@@ -59,3 +59,7 @@ export function ofType<
     const typeSet = new Set<string>(types)
     return filter((sum: Sum) => typeSet.has(sum.type)) as any
 }
+
+export function assertNever(_: never): never {
+    throw new Error("Unreachable.")
+}
