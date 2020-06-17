@@ -13,13 +13,13 @@ export type ConnectionState = Choice<
 
 export interface Model {
     readonly connectionState: ConnectionState
-    readonly mostRecentBattleResultTimestamp: number
+    readonly mostRecentTimestamp: number
     readonly battleResults: unknown[]
 }
 
 export const initialState: Model = {
     connectionState: Closed.create(),
-    mostRecentBattleResultTimestamp: 0,
+    mostRecentTimestamp: 0,
     battleResults: [],
 }
 
@@ -58,11 +58,11 @@ export function update(state: Model, msg: Msg): Model {
                 newState.connectionState = Closed.create()
                 break
             case GotNotification.type:
-                newState.mostRecentBattleResultTimestamp = msg.timestamp
+                newState.mostRecentTimestamp = msg.timestamp
                 newState.battleResults.push(msg.battleResult)
                 break
             case GotBattleResults.type:
-                newState.mostRecentBattleResultTimestamp = msg.timestamp
+                newState.mostRecentTimestamp = msg.timestamp
                 newState.battleResults.push(...msg.battleResults)
                 break
             default:

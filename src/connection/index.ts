@@ -36,9 +36,7 @@ const SUBSCRIBE_ID = 2
 export function withConnection({ state$, messages$ }: App<Model, Msg>) {
     const connection$ = messages$.pipe(
         ofType(OpenConnection.type),
-        switchMap(() =>
-            openConnection(state$.value.mostRecentBattleResultTimestamp),
-        ),
+        switchMap(() => openConnection(state$.value.mostRecentTimestamp)),
     )
     connection$.subscribe(messages$)
 }
