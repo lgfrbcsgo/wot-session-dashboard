@@ -96,6 +96,7 @@ export function notificationDecoder<Method extends string, Params>(
 export function responseDecoder(): D.Decoder<Response> {
     return D.compose(($) => {
         $(versionDecoder)
+        $(D.optionalField("error", D.fail("Response must not have an error.")))
         return response({
             result: $(D.field("result", D.any())),
             id: $(idDecoder),
@@ -111,6 +112,12 @@ const errorDetailDecoder = D.compose<ErrorDetail>(($) => ({
 
 const errorResponseDecoder = D.compose<ErrorResponse>(($) => {
     $(versionDecoder)
+    $(
+        D.optionalField(
+            "result",
+            D.fail("Error response must not have a result."),
+        ),
+    )
     return errorResponse({
         error: $(D.field("error", errorDetailDecoder)),
         id: $(idDecoder),
