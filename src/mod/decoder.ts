@@ -22,7 +22,7 @@ export function succeed<T>(value: T): Decoder<T> {
     return () => value
 }
 
-export function any(): Decoder<any> {
+export function any(): Decoder<unknown> {
     return (value) => value
 }
 

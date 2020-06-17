@@ -1,5 +1,5 @@
 import * as D from "./decoder"
-import { Variant, variantCreator } from "./variant"
+import { Variant, variantCreator } from "../variant"
 
 export const notification = variantCreator("notification")
 export const request = variantCreator("request")
