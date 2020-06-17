@@ -34,10 +34,10 @@ export type BatchRequest<
     T extends Notification | Request = Notification | Request
 > = Variant<typeof batchRequest.type, T[]>
 
-export type Response<Result = any> = Variant<
+export type Response = Variant<
     typeof response.type,
     {
-        result: Result
+        result: unknown
         id: Id
     }
 >
@@ -56,19 +56,21 @@ export type ErrorResponse = Variant<
     }
 >
 
-export type BatchResponse<T extends Response = Response> = Variant<
+export type BatchResponse = Variant<
     typeof batchResponse.type,
-    (T | ErrorResponse)[]
+    (Response | ErrorResponse)[]
 >
 
 export type ClientMessage<
     T extends Notification | Request = Notification | Request
 > = T | BatchRequest<T>
 
-export type ServerMessage<
-    Resp extends Response = Response,
-    Not extends Notification = Notification
-> = Resp | BatchResponse<Resp> | Not | BatchRequest<Not> | ErrorResponse
+export type ServerMessage<Not extends Notification = Notification> =
+    | Response
+    | ErrorResponse
+    | BatchResponse
+    | Not
+    | BatchRequest<Not>
 
 const versionDecoder = D.field("jsonrpc", D.literal("2.0"))
 
@@ -91,13 +93,11 @@ export function notificationDecoder<Method extends string, Params>(
     })
 }
 
-export function responseDecoder<Result>(
-    resultDecoder: D.Decoder<Result>,
-): D.Decoder<Response<Result>> {
+export function responseDecoder(): D.Decoder<Response> {
     return D.compose(($) => {
         $(versionDecoder)
         return response({
-            result: $(D.field("result", resultDecoder)),
+            result: $(D.field("result", D.any())),
             id: $(idDecoder),
         })
     })
@@ -117,15 +117,13 @@ const errorResponseDecoder = D.compose<ErrorResponse>(($) => {
     })
 })
 
-function batchResponseDecoder<T extends Response>(
-    responseDecoder: D.Decoder<T>,
-): D.Decoder<BatchResponse<T>> {
+function batchResponseDecoder(): D.Decoder<BatchResponse> {
     return D.compose(($) => {
         const responses = $(
             D.array(
-                D.oneOf<ErrorResponse | T>(
+                D.oneOf<Response | ErrorResponse>(
                     errorResponseDecoder,
-                    responseDecoder,
+                    responseDecoder(),
                 ),
             ),
         )
@@ -142,18 +140,14 @@ function batchRequestDecoder<T extends Notification | Request>(
     })
 }
 
-export function serverMessageDecoder<
-    Resp extends Response,
-    Not extends Notification
->(
-    responseDecoder: D.Decoder<Resp>,
+export function serverMessageDecoder<Not extends Notification>(
     notificationDecoder: D.Decoder<Not>,
-): D.Decoder<ServerMessage<Resp, Not>> {
-    return D.oneOf<ServerMessage<Resp, Not>>(
+): D.Decoder<ServerMessage<Not>> {
+    return D.oneOf<ServerMessage<Not>>(
         errorResponseDecoder,
-        responseDecoder,
+        responseDecoder(),
         notificationDecoder,
-        batchResponseDecoder(responseDecoder),
+        batchResponseDecoder(),
         batchRequestDecoder(notificationDecoder),
     )
 }
