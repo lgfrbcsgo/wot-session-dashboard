@@ -1,18 +1,13 @@
 import { html, TemplateResult } from "lit-html"
-import { ofType, Variant, variantCreator } from "./variant"
+import { Choice, none, ofType, variantCreator } from "./variant"
 import { App, attachToDevTools, Dispatch, run } from "./program"
 import { catchError, endWith, map, mergeMap, switchMap } from "rxjs/operators"
 import { from, Observable, of } from "rxjs"
 import {
-    ClientMessage,
     decodeGetBattleResultsResult,
     decodeSubscribeResult,
     encodeClientMessage,
-    GetBattleResultsRequest,
-    GetBattleResultsResult,
     serverMessageDecoder,
-    SubscribeRequest,
-    SubscriptionParams,
 } from "./mod/protocol"
 import {
     BatchRequest,
@@ -25,14 +20,13 @@ import {
 import { any, decode } from "./mod/decoder"
 import { webSocket } from "rxjs/webSocket"
 
-const Connecting = variantCreator("connecting")
-const Subscribed = variantCreator("subscribed")
-const Closed = variantCreator("closed")
+const Connecting = variantCreator("connecting", none)
+const Subscribed = variantCreator("subscribed", none)
+const Closed = variantCreator("closed", none)
 
-type ConnectionState =
-    | Variant<typeof Connecting.type>
-    | Variant<typeof Subscribed.type>
-    | Variant<typeof Closed.type>
+type ConnectionState = Choice<
+    typeof Connecting | typeof Subscribed | typeof Closed
+>
 
 interface Model {
     readonly connectionState: ConnectionState
@@ -41,32 +35,42 @@ interface Model {
 }
 
 const initialState: Model = {
-    connectionState: Closed(),
+    connectionState: Closed.create(),
     mostRecentNotification: 0,
     battleResults: [],
 }
 
-const OpenConnection = variantCreator("open-connection")
-const ConnectionClosed = variantCreator("connection-closed")
-const GotNotification = variantCreator("got-Notification")
-const DidSubscribe = variantCreator("didSubscribe")
-const GotBattleResults = variantCreator("got-battle-results")
+const OpenConnection = variantCreator("open-connection", none)
+const ConnectionClosed = variantCreator("connection-closed", none)
+const GotNotification = variantCreator(
+    "got-Notification",
+    (timestamp: number, battleResult: unknown) => ({ timestamp, battleResult }),
+)
+const DidSubscribe = variantCreator("didSubscribe", none)
+const GotBattleResults = variantCreator(
+    "got-battle-results",
+    (timestamp: number, battleResults: unknown[]) => ({
+        timestamp,
+        battleResults,
+    }),
+)
 
-type Msg =
-    | Variant<typeof OpenConnection.type>
-    | Variant<typeof ConnectionClosed.type>
-    | Variant<typeof GotNotification.type, SubscriptionParams<unknown>>
-    | Variant<typeof DidSubscribe.type>
-    | Variant<typeof GotBattleResults.type, GetBattleResultsResult<unknown>>
+type Msg = Choice<
+    | typeof OpenConnection
+    | typeof ConnectionClosed
+    | typeof GotNotification
+    | typeof DidSubscribe
+    | typeof GotBattleResults
+>
 
 function update(state: Model, msg: Msg): Model {
     switch (msg.type) {
         case OpenConnection.type:
-            return { ...state, connectionState: Connecting() }
+            return { ...state, connectionState: Connecting.create() }
         case DidSubscribe.type:
-            return { ...state, connectionState: Subscribed() }
+            return { ...state, connectionState: Subscribed.create() }
         case ConnectionClosed.type:
-            return { ...state, connectionState: Closed() }
+            return { ...state, connectionState: Closed.create() }
         case GotNotification.type:
             return {
                 ...state,
@@ -76,7 +80,7 @@ function update(state: Model, msg: Msg): Model {
         case GotBattleResults.type:
             return {
                 ...state,
-                mostRecentNotification: msg.value.end,
+                mostRecentNotification: msg.value.timestamp,
                 battleResults: [
                     ...state.battleResults,
                     ...msg.value.battleResults,
@@ -89,7 +93,9 @@ function view(state: Model, dispatch: Dispatch<Msg>): TemplateResult {
     return html`
         <h1>${state.connectionState.type}</h1>
         <p>${state.battleResults.length}</p>
-        <button @click="${() => dispatch(OpenConnection())}">connect</button>
+        <button @click="${() => dispatch(OpenConnection.create())}">
+            connect
+        </button>
     `
 }
 
@@ -102,22 +108,15 @@ function withConnection({ state$, messages$ }: App<Model, Msg>) {
 }
 
 function connect(mostRecentNotification: number): Observable<Msg> {
-    const getBattleResults: GetBattleResultsRequest = Request({
-        method: "get_battle_results",
-        params: { after: mostRecentNotification },
-        id: 1,
-    })
+    const getBattleResults = Request.create(
+        "get_battle_results",
+        { after: mostRecentNotification },
+        1,
+    )
 
-    const subscribe: SubscribeRequest = Request({
-        method: "subscribe",
-        params: null,
-        id: 2,
-    })
+    const subscribe = Request.create("subscribe", null, 2)
 
-    const initialRequest: ClientMessage = BatchRequest([
-        getBattleResults,
-        subscribe,
-    ])
+    const initialRequest = BatchRequest.create([getBattleResults, subscribe])
 
     const responseDecoder = serverMessageDecoder(any())
     const gotBattleResultsDecoder = decodeGetBattleResultsResult(any())
@@ -130,10 +129,10 @@ function connect(mostRecentNotification: number): Observable<Msg> {
                     gotBattleResultsDecoder,
                     response.value.result,
                 )
-                return GotBattleResults(result)
+                return GotBattleResults.create(result.end, result.battleResults)
             case subscribe.value.id:
                 decode(didSubscribeDecoder, response.value.result)
-                return DidSubscribe()
+                return DidSubscribe.create()
             default:
                 throw new Error("Unexpected Response.")
         }
@@ -153,7 +152,11 @@ function connect(mostRecentNotification: number): Observable<Msg> {
         map((flattened) => {
             switch (flattened.type) {
                 case Notification.type:
-                    return GotNotification(flattened.value.params)
+                    const result = flattened.value.params
+                    return GotNotification.create(
+                        result.timestamp,
+                        result.battleResult,
+                    )
                 case ErrorResponse.type:
                     throw new Error("Request failed.")
                 case Response.type:
@@ -164,7 +167,7 @@ function connect(mostRecentNotification: number): Observable<Msg> {
             console.error(error)
             return of<Msg>()
         }),
-        endWith(ConnectionClosed()),
+        endWith(ConnectionClosed.create()),
     )
 }
 

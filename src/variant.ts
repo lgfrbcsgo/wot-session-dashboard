@@ -6,19 +6,43 @@ export interface Variant<Type extends string, Value = undefined> {
     readonly value: Value
 }
 
-export interface VariantBuilder<Type extends string> {
-    (): Variant<Type>
-    <Value>(value: Value): Variant<Type, Value>
+export interface VariantBuilder<
+    Type extends string,
+    ValueCreator extends (...args: any[]) => any
+> {
+    create: ValueCreator
     type: Type
 }
 
-export function variantCreator<Type extends string>(
+export type Choice<T extends VariantBuilder<any, any>> = ReturnType<T["create"]>
+
+export type Lift<Type extends string> = <Value>(
+    value: Value,
+) => Variant<Type, Value>
+
+export function genericVariantCreator<
+    Type extends string,
+    ValueCreator extends (...args: any[]) => any
+>(
     type: Type,
-): VariantBuilder<Type> {
-    const builder = <Value>(value?: Value) => ({ type, value })
-    builder.type = type
-    return builder
+    valueCreatorFactory: (lift: Lift<Type>) => ValueCreator,
+): VariantBuilder<Type, ValueCreator> {
+    return {
+        create: valueCreatorFactory((value) => ({ type, value })),
+        type,
+    }
 }
+
+export function variantCreator<Type extends string, Args extends any[], Ret>(
+    type: Type,
+    valueCreator: (...args: Args) => Ret,
+) {
+    return genericVariantCreator(type, (lift) => (...args: Args) =>
+        lift(valueCreator(...args)),
+    )
+}
+
+export const none = () => undefined
 
 export type GetInstance<
     Type extends Sum["type"],

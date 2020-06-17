@@ -1,12 +1,5 @@
 import * as D from "./decoder"
-import { Variant, variantCreator } from "../variant"
-
-export const Notification = variantCreator("Notification")
-export const Request = variantCreator("Request")
-export const BatchRequest = variantCreator("batch-Request")
-export const Response = variantCreator("Response")
-export const ErrorResponse = variantCreator("error-Response")
-export const BatchResponse = variantCreator("batch-Response")
+import { Variant, genericVariantCreator } from "../variant"
 
 export type Id = null | number | string
 
@@ -21,6 +14,14 @@ export type Notification<
     }
 >
 
+export const Notification = genericVariantCreator(
+    "notification",
+    (lift) => <Method extends string, Params>(
+        method: Method,
+        params: Params,
+    ): Notification<Method, Params> => lift({ method, params }),
+)
+
 export type Request<Method extends string = string, Params = any> = Variant<
     typeof Request.type,
     {
@@ -30,9 +31,25 @@ export type Request<Method extends string = string, Params = any> = Variant<
     }
 >
 
+export const Request = genericVariantCreator(
+    "request",
+    (lift) => <Method extends string, Params>(
+        method: Method,
+        params: Params,
+        id: Id,
+    ): Request<Method, Params> => lift({ method, params, id }),
+)
+
 export type BatchRequest<
     T extends Notification | Request = Notification | Request
 > = Variant<typeof BatchRequest.type, T[]>
+
+export const BatchRequest = genericVariantCreator(
+    "batch-request",
+    (lift) => <T extends Notification | Request>(
+        requests: T[],
+    ): BatchRequest<T> => lift(requests),
+)
 
 export type Response = Variant<
     typeof Response.type,
@@ -41,6 +58,11 @@ export type Response = Variant<
         id: Id
     }
 >
+
+export const Response = genericVariantCreator(
+    "response",
+    (lift) => (result: unknown, id: Id): Response => lift({ result, id }),
+)
 
 export interface ErrorDetail {
     code: number
@@ -56,10 +78,22 @@ export type ErrorResponse = Variant<
     }
 >
 
+export const ErrorResponse = genericVariantCreator(
+    "error-response",
+    (lift) => (error: ErrorDetail, id: Id): ErrorResponse =>
+        lift({ error, id }),
+)
+
 export type BatchResponse = Variant<
     typeof BatchResponse.type,
     (Response | ErrorResponse)[]
 >
+
+export const BatchResponse = genericVariantCreator(
+    "batch-response",
+    (lift) => (responses: (Response | ErrorResponse)[]): BatchResponse =>
+        lift(responses),
+)
 
 export type ClientMessage<
     T extends Notification | Request = Notification | Request
@@ -86,10 +120,10 @@ export function notificationDecoder<Method extends string, Params>(
     return D.compose(($) => {
         $(versionDecoder)
         $(D.optionalField("id", D.fail("Notifications must not have an id.")))
-        return Notification({
-            method: $(D.field("method", D.literal(method))),
-            params: $(D.field("params", paramsDecoder)),
-        })
+        return Notification.create(
+            $(D.field("method", D.literal(method))),
+            $(D.field("params", paramsDecoder)),
+        )
     })
 }
 
@@ -97,10 +131,7 @@ export function responseDecoder(): D.Decoder<Response> {
     return D.compose(($) => {
         $(versionDecoder)
         $(D.optionalField("error", D.fail("Response must not have an error.")))
-        return Response({
-            result: $(D.field("result", D.any())),
-            id: $(idDecoder),
-        })
+        return Response.create($(D.field("result", D.any())), $(idDecoder))
     })
 }
 
@@ -118,10 +149,10 @@ const errorResponseDecoder = D.compose<ErrorResponse>(($) => {
             D.fail("Error Response must not have a result."),
         ),
     )
-    return ErrorResponse({
-        error: $(D.field("error", errorDetailDecoder)),
-        id: $(idDecoder),
-    })
+    return ErrorResponse.create(
+        $(D.field("error", errorDetailDecoder)),
+        $(idDecoder),
+    )
 })
 
 function batchResponseDecoder(): D.Decoder<BatchResponse> {
@@ -134,7 +165,7 @@ function batchResponseDecoder(): D.Decoder<BatchResponse> {
                 ),
             ),
         )
-        return BatchResponse(responses)
+        return BatchResponse.create(responses)
     })
 }
 
@@ -143,7 +174,7 @@ function batchRequestDecoder<T extends Notification | Request>(
 ): D.Decoder<BatchRequest<T>> {
     return D.compose(($) => {
         const requests = $(D.array(requestDecoder))
-        return BatchRequest(requests)
+        return BatchRequest.create(requests)
     })
 }
 
