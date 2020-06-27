@@ -19,5 +19,7 @@ let view model dispatch =
 
 Program.mkProgram init update view
 |> Program.withReactBatched "elmish-app"
+#if DEBUG
 |> Program.withDebugger
+#endif
 |> Program.run

@@ -41,7 +41,7 @@ module.exports = ({ifDev, ifProd}) => ({
         new CleanWebpackPlugin(),
         new HtmlWebpackPlugin({
             filename: 'index.html',
-            template: './src/index.html',
+            template: './public/index.html',
         }),
         new BundleAnalyzerPlugin({
             analyzerMode: 'static',
