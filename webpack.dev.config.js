@@ -1,3 +1,7 @@
-﻿const config = require('./webpack.config');
+﻿﻿﻿const {preserve, ignore} = require("./build-util");
+const config = require('./webpack.config');
 
-module.exports = config(false);
+module.exports = config({
+    ifProd: ignore,
+    ifDev: preserve,
+});
