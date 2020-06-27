@@ -12,14 +12,14 @@ module.exports = ({ifDev, ifProd}) => ({
         mode: 'production',
         devtool: 'source-map'
     }),
-    entry: "./src/App.fsproj",
+    entry: './src/App.fsproj',
     output: {
-        path: path.join(__dirname, "./dist"),
+        path: path.join(__dirname, './dist'),
         filename: '[name].[hash].js',
     },
     devServer: {
-        publicPath: "/",
-        contentBase: "./dist",
+        publicPath: '/',
+        contentBase: './dist',
         port: 8080,
         historyApiFallback: true,
     },
@@ -33,7 +33,7 @@ module.exports = ({ifDev, ifProd}) => ({
         rules: [
             {
                 test: /\.fs(x|proj)?$/,
-                use: "fable-loader",
+                use: 'fable-loader',
             },
         ]
     },
