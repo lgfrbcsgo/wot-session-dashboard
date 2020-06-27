@@ -48,4 +48,16 @@ module.exports = ({ifDev, ifProd}) => ({
             openAnalyzer: false,
         }),
     ],
+    optimization: {
+        splitChunks: {
+            cacheGroups: {
+                vendor: {
+                    test: /node_modules/,
+                    chunks: "initial",
+                    name: "vendor",
+                    enforce: true,
+                },
+            },
+        },
+    },
 });
