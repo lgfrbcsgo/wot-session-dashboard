@@ -1,4 +1,4 @@
-﻿﻿﻿const {preserve, ignore} = require('./build-util');
+﻿const {preserve, ignore} = require('./build-util');
 const config = require('./webpack.config');
 
 module.exports = config({
