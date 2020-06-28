@@ -20,6 +20,8 @@
         <Content Include="App.fsproj" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="DecoderExtra.fs" />
+        <Compile Include="Coding.fs" />
         <Compile Include="App.fs" />
     </ItemGroup>
 </Project>
