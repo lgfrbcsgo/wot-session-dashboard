@@ -1,9 +1,11 @@
 {
     "private": true,
     "scripts": {
-        "start": "npm run tailwind && webpack-dev-server --config webpack.dev.config.js",
-        "build": "npm run tailwind && webpack --config webpack.prod.config.js",
-        "tailwind": "tailwindcss build node_modules/tailwindcss/tailwind.css -o gen/tailwind.css"
+        "start": "run-s tailwind dev-server",
+        "build": "run-s tailwind webpack",
+        "tailwind": "tailwindcss build node_modules/tailwindcss/tailwind.css -o gen/tailwind.css",
+        "webpack": "webpack --config webpack.prod.config.js",
+        "dev-server": "webpack-dev-server --config webpack.dev.config.js"
     },
     "dependencies": {
         "preact": "10.4.4"
@@ -17,6 +19,7 @@
         "glob": "7.1.6",
         "html-webpack-plugin": "4.2.0",
         "mini-css-extract-plugin": "0.9.0",
+        "npm-run-all": "4.1.5",
         "optimize-css-assets-webpack-plugin": "5.0.3",
         "purgecss-webpack-plugin": "2.3.0",
         "remotedev": "0.2.9",
