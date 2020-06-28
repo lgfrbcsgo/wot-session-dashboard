@@ -100,10 +100,8 @@ let update msg model =
         newModel, Cmd.none
 
 open Fable.React
-open Zanaptak.TypedCssClasses
 open ReactUtil
-
-type tw = CssClasses<"../gen/tailwind.css", Naming.Verbatim>
+open Css
 
 let toPercentage n total =
     if total = 0

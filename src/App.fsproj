@@ -22,9 +22,10 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="DecoderExtra.fs" />
-        <Compile Include="ReactUtil.fs" />
         <Compile Include="BattleResult.fs" />
         <Compile Include="Protocol.fs" />
+        <Compile Include="ReactUtil.fs" />
+        <Compile Include="Css.fs" />
         <Compile Include="App.fs" />
     </ItemGroup>
 </Project>

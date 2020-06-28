@@ -17,7 +17,7 @@ module.exports = ({ifDev, ifProd}) => ({
         mode: 'production',
         devtool: 'source-map'
     }),
-    entry: ['./src/App.fsproj', './gen/tailwind.css'],
+    entry: './src/App.fsproj',
     output: {
         path: path.join(__dirname, './dist'),
         filename: '[name].[hash].js',
