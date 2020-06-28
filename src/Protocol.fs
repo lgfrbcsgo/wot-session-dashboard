@@ -32,7 +32,7 @@ type BattleResultsOffset = int
 type InitRequest =
     { BattleResultsOffset: BattleResultsOffset }
 
-    static member Encode request =
+    static member encode request =
         Encode.list
             [ Helpers.encodeRequest SUBSCRIBE Encode.nil
               Helpers.encodeRequest GET_BATTLE_RESULTS
@@ -43,12 +43,12 @@ type InitResponse =
     { BattleResultsOffset: BattleResultsOffset
       BattleResults: BattleResult List }
 
-    static member Decoder: Decoder<InitResponse> =
+    static member decoder: Decoder<InitResponse> =
         let payloadDecoder =
             decoder {
                 let! offset = Decode.field "end" Decode.int
                 let! battleResults =
-                    Decode.field "battleResults" <| Decode.list BattleResult.Decoder
+                    Decode.field "battleResults" <| Decode.list BattleResult.decoder
                 return { BattleResultsOffset = offset
                          BattleResults = battleResults }
             }
@@ -62,12 +62,13 @@ type SubscriptionNotification =
     { BattleResultsOffset: BattleResultsOffset
       BattleResult: BattleResult }
 
-    static member Decoder: Decoder<SubscriptionNotification> =
+    static member decoder: Decoder<SubscriptionNotification> =
         let payloadDecoder =
             decoder {
                 let! offset = Decode.field "timestamp" Decode.int
-                let! battleResult = Decode.field "battleResult" BattleResult.Decoder
+                let! battleResult = Decode.field "battleResult" BattleResult.decoder
                 return { BattleResultsOffset = offset
-                         BattleResult = battleResult } }
+                         BattleResult = battleResult }
+            }
 
         Helpers.notificationDecoder "subscription" payloadDecoder

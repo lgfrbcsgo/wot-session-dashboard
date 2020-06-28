@@ -32,7 +32,7 @@ let connectToServer battleResultsOffset dispatch =
 
     let onOpen _ =
         { BattleResultsOffset = battleResultsOffset }
-        |> InitRequest.Encode
+        |> InitRequest.encode
         |> Encode.toString 0
         |> ws.send
 
@@ -50,14 +50,14 @@ let connectToServer battleResultsOffset dispatch =
     let onSubscriptionMessage (e: MessageEvent) =
         e.data
         |> unbox
-        |> Decode.fromString SubscriptionNotification.Decoder
+        |> Decode.fromString SubscriptionNotification.decoder
         |> Result.map (GotSubscriptionNotification >> dispatch)
         |> Result.mapError (ignore >> dispatchError)
 
     let onInitialMessage (e: MessageEvent) =
         e.data
         |> unbox
-        |> Decode.fromString InitResponse.Decoder
+        |> Decode.fromString InitResponse.decoder
         |> Result.map (fun value ->
             // switch to handling subscription notifications
             ws.onmessage <- onSubscriptionMessage
@@ -101,10 +101,19 @@ let update msg model =
 
 open Fable.React
 
+let toPercentage n total =
+    if total = 0
+    then "N/A"
+    else float n / float total |> sprintf "%.0f%%"
+
 let view model dispatch =
-    List.length model.BattleResults
-    |> sprintf "#battles: %d"
-    |> str
+    let randomBattles =
+        model.BattleResults |> List.filter BattleResult.isRandomBattle 
+
+    let victories =
+        randomBattles |> List.filter BattleResult.isVictory
+
+    toPercentage (List.length victories) (List.length randomBattles) |> str
 
 Program.mkProgram init update view
 |> Program.withReactBatched "elmish-app"
