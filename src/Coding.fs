@@ -15,17 +15,21 @@ let responseDecoder method payloadDecoder =
         do! Decode.field "id" <| Decode.stringLiteral method
         return! Decode.field "result" payloadDecoder
     }
-    
+
 let notificationDecoder method payloadDecoder =
     decoder {
         do! Decode.field "method" <| Decode.stringLiteral method
         return! Decode.field "params" payloadDecoder
     }
-    
+
+let SUBSCRIBE = "subscribe"
+let GET_BATTLE_RESULTS = "get_battle_results"
+
 let encodeInitialRequest battleResultsOffset =
     Encode.list
-        [ encodeRequest "subscribe" Encode.nil
-          encodeRequest "get_battle_results" <| Encode.object [ "after", Encode.int battleResultsOffset ] ]
+        [ encodeRequest SUBSCRIBE Encode.nil
+          encodeRequest GET_BATTLE_RESULTS
+          <| Encode.object [ "after", Encode.int battleResultsOffset ] ]
 
 let initialResponseDecoder battleResultDecoder =
     let payloadDecoder =
@@ -35,8 +39,8 @@ let initialResponseDecoder battleResultDecoder =
             return offset, battleResults }
 
     decoder {
-        do! Decode.index 0 <| responseDecoder "subscribe" (Decode.succeed ())
-        return! Decode.index 1 <| responseDecoder "get_battle_results" payloadDecoder
+        do! Decode.index 0 <| responseDecoder SUBSCRIBE (Decode.succeed ())
+        return! Decode.index 1 <| responseDecoder GET_BATTLE_RESULTS payloadDecoder
     }
 
 let subscriptionDecoder battleResultDecoder =
@@ -45,7 +49,7 @@ let subscriptionDecoder battleResultDecoder =
             let! offset = Decode.field "timestamp" Decode.int
             let! battleResult = Decode.field "battleResult" battleResultDecoder
             return offset, battleResult }
-        
+
     notificationDecoder "subscription" payloadDecoder
- 
+
 let battleResultDecoder: unit Decoder = Decode.succeed ()

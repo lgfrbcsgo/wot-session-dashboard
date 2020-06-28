@@ -85,12 +85,14 @@ let update msg model =
     | StateChanged newState ->
         let newModel = { model with ConnectionState = newState }
         newModel, Cmd.none
+
     | GotBattleResult (offset, battleResult) ->
         let newModel =
             { model with
                   BattleResultsOffset = offset
                   BattleResults = model.BattleResults @ [ battleResult ] }
         newModel, Cmd.none
+        
     | GotBattleResults (offset, battleResults) ->
         let newModel =
             { model with
@@ -101,7 +103,9 @@ let update msg model =
 open Fable.React
 
 let view model dispatch =
-    List.length model.BattleResults |> sprintf "#battles: %d" |> str 
+    List.length model.BattleResults
+    |> sprintf "#battles: %d"
+    |> str
 
 Program.mkProgram init update view
 |> Program.withReactBatched "elmish-app"
