@@ -100,6 +100,10 @@ let update msg model =
         newModel, Cmd.none
 
 open Fable.React
+open Fable.React.Props
+open Zanaptak.TypedCssClasses
+
+type tw = CssClasses<"../gen/tailwind.css", Naming.Verbatim>
 
 let toPercentage n total =
     if total = 0
@@ -108,12 +112,13 @@ let toPercentage n total =
 
 let view model dispatch =
     let randomBattles =
-        model.BattleResults |> List.filter BattleResult.isRandomBattle 
+        model.BattleResults |> List.filter BattleResult.isRandomBattle
 
     let victories =
         randomBattles |> List.filter BattleResult.isVictory
 
-    toPercentage (List.length victories) (List.length randomBattles) |> str
+    h1 [ ClassName tw.``text-4xl`` ]
+        [ toPercentage (List.length victories) (List.length randomBattles) |> str ]
 
 Program.mkProgram init update view
 |> Program.withReactBatched "elmish-app"

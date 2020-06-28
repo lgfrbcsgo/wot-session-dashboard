@@ -1,22 +1,30 @@
 {
-  "private": true,
-  "scripts": {
-    "start": "webpack-dev-server --config webpack.dev.config.js",
-    "build": "webpack --config webpack.prod.config.js"
-  },
-  "dependencies": {
-    "preact": "^10.4.4"
-  },
-  "devDependencies": {
-    "@babel/core": "7.9.0",
-    "clean-webpack-plugin": "3.0.0",
-    "fable-compiler": "2.10.1",
-    "fable-loader": "2.1.9",
-    "html-webpack-plugin": "4.2.0",
-    "remotedev": "0.2.9",
-    "webpack": "4.43.0",
-    "webpack-cli": "3.3.11",
-    "webpack-dev-server": "3.11.0",
-    "webpack-bundle-analyzer": "3.8.0"
-  }
+    "private": true,
+    "scripts": {
+        "start": "npm run tailwind && webpack-dev-server --config webpack.dev.config.js",
+        "build": "npm run tailwind && webpack --config webpack.prod.config.js",
+        "tailwind": "tailwindcss build node_modules/tailwindcss/tailwind.css -o gen/tailwind.css"
+    },
+    "dependencies": {
+        "preact": "10.4.4"
+    },
+    "devDependencies": {
+        "@babel/core": "7.9.0",
+        "clean-webpack-plugin": "3.0.0",
+        "css-loader": "3.6.0",
+        "fable-compiler": "2.10.1",
+        "fable-loader": "2.1.9",
+        "glob": "7.1.6",
+        "html-webpack-plugin": "4.2.0",
+        "mini-css-extract-plugin": "0.9.0",
+        "optimize-css-assets-webpack-plugin": "5.0.3",
+        "purgecss-webpack-plugin": "2.3.0",
+        "remotedev": "0.2.9",
+        "tailwindcss": "1.4.6",
+        "terser-webpack-plugin": "3.0.6",
+        "webpack": "4.43.0",
+        "webpack-bundle-analyzer": "3.8.0",
+        "webpack-cli": "3.3.11",
+        "webpack-dev-server": "3.11.0"
+    }
 }

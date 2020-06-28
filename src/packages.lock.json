@@ -93,6 +93,15 @@
           "Fable.Core": "3.1.4"
         }
       },
+      "Zanaptak.TypedCssClasses": {
+        "type": "Direct",
+        "requested": "[0.2.0, )",
+        "resolved": "0.2.0",
+        "contentHash": "FeBEVPKvz6Ay2nhiGcLiY4rs49BcMu/VXv4uk/SktO9P5zE1kx3Cir+7smM3KSh1iwrCp5Vvh0bYYg+d9xlXjA==",
+        "dependencies": {
+          "FSharp.Core": "4.3.4"
+        }
+      },
       "Fable.Browser.Blob": {
         "type": "Transitive",
         "resolved": "1.0.0",

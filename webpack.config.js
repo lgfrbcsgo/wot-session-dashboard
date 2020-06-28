@@ -1,7 +1,12 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const {CleanWebpackPlugin} = require('clean-webpack-plugin');
 const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer');
-const path = require("path");
+const TerserJSPlugin = require('terser-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const PurgecssPlugin = require('purgecss-webpack-plugin')
+const path = require('path');
+const glob = require('glob');
 
 module.exports = ({ifDev, ifProd}) => ({
     ...ifDev({
@@ -12,7 +17,7 @@ module.exports = ({ifDev, ifProd}) => ({
         mode: 'production',
         devtool: 'source-map'
     }),
-    entry: './src/App.fsproj',
+    entry: ['./src/App.fsproj', './gen/tailwind.css'],
     output: {
         path: path.join(__dirname, './dist'),
         filename: '[name].[hash].js',
@@ -35,6 +40,13 @@ module.exports = ({ifDev, ifProd}) => ({
                 test: /\.fs(x|proj)?$/,
                 use: 'fable-loader',
             },
+            {
+                test: /\.css$/,
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    'css-loader',
+                ]
+            }
         ]
     },
     plugins: [
@@ -42,6 +54,15 @@ module.exports = ({ifDev, ifProd}) => ({
         new HtmlWebpackPlugin({
             filename: 'index.html',
             template: './public/index.html',
+        }),
+        new MiniCssExtractPlugin({
+            filename: '[name].[hash].css',
+        }),
+        new PurgecssPlugin({
+            paths: [
+                './public/index.html',
+                ...glob.sync('./src/**/*.fs', {nodir: true})
+            ],
         }),
         new BundleAnalyzerPlugin({
             analyzerMode: 'static',
@@ -52,12 +73,16 @@ module.exports = ({ifDev, ifProd}) => ({
         splitChunks: {
             cacheGroups: {
                 vendor: {
+                    name: 'vendor',
                     test: /node_modules/,
-                    chunks: "initial",
-                    name: "vendor",
+                    chunks: 'initial',
                     enforce: true,
                 },
             },
         },
+        minimizer: ifProd([
+            new TerserJSPlugin({}), 
+            new OptimizeCSSAssetsPlugin({}),
+        ]),
     },
 });
