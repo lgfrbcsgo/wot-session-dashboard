@@ -100,8 +100,8 @@ let update msg model =
         newModel, Cmd.none
 
 open Fable.React
-open Fable.React.Props
 open Zanaptak.TypedCssClasses
+open ReactUtil
 
 type tw = CssClasses<"../gen/tailwind.css", Naming.Verbatim>
 
@@ -117,7 +117,7 @@ let view model dispatch =
     let victories =
         randomBattles |> List.filter BattleResult.isVictory
 
-    h1 [ ClassName tw.``text-4xl`` ]
+    h1 [ ClassNames [ tw.``text-6xl``; tw.``tracking-wide`` ] ]
         [ toPercentage (List.length victories) (List.length randomBattles) |> str ]
 
 Program.mkProgram init update view

@@ -1,5 +1,9 @@
 ﻿module.exports = {
-    theme: {},
+    theme: {
+        fontFamily: {
+            'sans': ['Helvetica', 'Arial', 'sans-serif'],
+        },
+    },
     variants: {},
     plugins: [],
 }
