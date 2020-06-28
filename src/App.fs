@@ -14,7 +14,7 @@ type ConnectionState =
     | Connecting
     | Subscribed
     | Disconnected
-    | Incompatible
+    | IncompatibleServerError
 
 type Model =
     { ConnectionState: ConnectionState
@@ -27,7 +27,7 @@ type Msg =
     | GotBattleResult of BattleResultsOffset * BattleResult
 
 open Thoth.Json
-open App.Coding
+open Coding
 
 let connectToServer battleResultsOffset dispatch =
     let ws = WebSocket.Create "ws://localhost:15455"
@@ -46,7 +46,7 @@ let connectToServer battleResultsOffset dispatch =
         // ignore close event to not dispatch another state change
         ws.onclose <- noop
         ws.close ()
-        dispatch (StateChanged Incompatible)
+        dispatch (StateChanged IncompatibleServerError)
 
     let onSubscriptionMessage (e: MessageEvent) =
         e.data

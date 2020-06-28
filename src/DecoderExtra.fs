@@ -1,4 +1,4 @@
-﻿module App.DecoderExtra
+﻿module DecoderExtra
 
 open System
 open Thoth.Json

@@ -1,7 +1,7 @@
-﻿module App.Coding
+﻿module Coding
 
 open Thoth.Json
-open App.DecoderExtra
+open DecoderExtra
 
 let encodeRequest method payload =
     Encode.object
