@@ -6,9 +6,8 @@ open Elmish
 open Elmish.React
 open Elmish.Debug
 
-type BattleResult = unit
-
-type BattleResultsOffset = int
+open BattleResult
+open Protocol
 
 type ConnectionState =
     | Connecting
@@ -22,23 +21,23 @@ type Model =
       BattleResultsOffset: BattleResultsOffset }
 
 type Msg =
-    | StateChanged of ConnectionState
-    | GotBattleResults of BattleResultsOffset * BattleResult list
-    | GotBattleResult of BattleResultsOffset * BattleResult
+    | ConnectionStateChanged of ConnectionState
+    | GotInitResponse of InitResponse
+    | GotSubscriptionNotification of SubscriptionNotification
 
 open Thoth.Json
-open Coding
 
 let connectToServer battleResultsOffset dispatch =
     let ws = WebSocket.Create "ws://localhost:15455"
 
     let onOpen _ =
-        encodeInitialRequest battleResultsOffset
+        { BattleResultsOffset = battleResultsOffset }
+        |> InitRequest.Encode
         |> Encode.toString 0
         |> ws.send
 
     let onClose _ =
-        dispatch (StateChanged Disconnected)
+        dispatch (ConnectionStateChanged Disconnected)
 
     let noop _ = ()
 
@@ -46,31 +45,31 @@ let connectToServer battleResultsOffset dispatch =
         // ignore close event to not dispatch another state change
         ws.onclose <- noop
         ws.close ()
-        dispatch (StateChanged IncompatibleServerError)
+        dispatch (ConnectionStateChanged IncompatibleServerError)
 
     let onSubscriptionMessage (e: MessageEvent) =
         e.data
         |> unbox
-        |> Decode.fromString (subscriptionDecoder battleResultDecoder)
-        |> Result.map (GotBattleResult >> dispatch)
+        |> Decode.fromString SubscriptionNotification.Decoder
+        |> Result.map (GotSubscriptionNotification >> dispatch)
         |> Result.mapError (ignore >> dispatchError)
 
     let onInitialMessage (e: MessageEvent) =
         e.data
         |> unbox
-        |> Decode.fromString (initialResponseDecoder battleResultDecoder)
+        |> Decode.fromString InitResponse.Decoder
         |> Result.map (fun value ->
             // switch to handling subscription notifications
             ws.onmessage <- onSubscriptionMessage
-            dispatch (StateChanged Subscribed)
-            dispatch (GotBattleResults value))
+            dispatch (ConnectionStateChanged Subscribed)
+            dispatch (GotInitResponse value))
         |> Result.mapError (ignore >> dispatchError)
 
     ws.onopen <- onOpen
     ws.onclose <- onClose
     ws.onmessage <- onInitialMessage
 
-    dispatch (StateChanged Connecting)
+    dispatch (ConnectionStateChanged Connecting)
 
 let init () =
     let state =
@@ -82,22 +81,22 @@ let init () =
 
 let update msg model =
     match msg with
-    | StateChanged newState ->
+    | ConnectionStateChanged newState ->
         let newModel = { model with ConnectionState = newState }
         newModel, Cmd.none
 
-    | GotBattleResult (offset, battleResult) ->
+    | GotSubscriptionNotification notification ->
         let newModel =
             { model with
-                  BattleResultsOffset = offset
-                  BattleResults = model.BattleResults @ [ battleResult ] }
+                  BattleResultsOffset = notification.BattleResultsOffset
+                  BattleResults = model.BattleResults @ [ notification.BattleResult ] }
         newModel, Cmd.none
-        
-    | GotBattleResults (offset, battleResults) ->
+
+    | GotInitResponse response ->
         let newModel =
             { model with
-                  BattleResultsOffset = offset
-                  BattleResults = model.BattleResults @ battleResults }
+                  BattleResultsOffset = response.BattleResultsOffset
+                  BattleResults = model.BattleResults @ response.BattleResults }
         newModel, Cmd.none
 
 open Fable.React

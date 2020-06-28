@@ -21,7 +21,8 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="DecoderExtra.fs" />
-        <Compile Include="Coding.fs" />
+        <Compile Include="BattleResult.fs" />
+        <Compile Include="Protocol.fs" />
         <Compile Include="App.fs" />
     </ItemGroup>
 </Project>
