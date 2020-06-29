@@ -131,33 +131,33 @@ let viewStatusBar connectionState dispatch =
     match connectionState with
     | Subscribed -> nothing
     | Connecting ->
-        div [ ClassNames [ tw.``bg-gray-900``; tw.``text-white``; tw.``p-2`` ] ]
+        aside [ ClassNames [ tw.``bg-gray-900``; tw.``text-white``; tw.``p-2`` ] ]
             [ h3 [ ClassName tw.``font-bold`` ] [ str "Connecting ..." ] ]
 
     | Disconnected ->
-        div
+        aside
             [ ClassNames
                 [ tw.``bg-red-600``; tw.``p-2``; tw.``space-x-4``; tw.flex; tw.``items-center`` ] ]
-            [ p [ ClassName tw.``flex-grow`` ]
+            [ div [ ClassName tw.``flex-grow`` ]
                   [ h3 [ ClassName tw.``font-bold`` ] [ str "Disconnected." ]
                     p [] [ str "Could not connect to the battle results server. \
                                 Please make sure that WoT is running and that the battle \
                                 results server mod is installed correctly." ] ]
               button
-                  [ OnClick (fun _ -> dispatch Connect)
+                  [ OnClick(fun _ -> dispatch Connect)
                     ClassNames
-                      [ tw.``bg-gray-100``
-                        tw.``hover:bg-gray-300``
-                        tw.``font-bold``
-                        tw.``py-2``
-                        tw.``px-4``
-                        tw.``border-solid``
-                        tw.``border-2``
-                        tw.``border-gray-300``
-                        tw.rounded ] ] [ str "Connect" ] ]
+                        [ tw.``bg-gray-100``
+                          tw.``hover:bg-gray-300``
+                          tw.``font-bold``
+                          tw.``py-2``
+                          tw.``px-4``
+                          tw.``border-solid``
+                          tw.``border-2``
+                          tw.``border-gray-300``
+                          tw.rounded ] ] [ str "Connect" ] ]
 
     | ProtocolError ->
-        div [ ClassNames [ tw.``bg-red-600``; tw.``p-2`` ] ]
+        aside [ ClassNames [ tw.``bg-red-600``; tw.``p-2`` ] ]
             [ h3 [ ClassName tw.``font-bold`` ] [ str "Oh no." ]
               p [] [ str "Something went wrong. Please make sure that the the latest version \
                           of the battle results server mod is installed." ] ]
@@ -168,7 +168,7 @@ let view model dispatch =
 
     fragment []
         [ viewStatusBar model.ConnectionState dispatch
-          div
+          main
               [ ClassNames
                   [ tw.grid; tw.``grid-flow-row-dense``; tw.``grid-rows-h-48``; tw.``grid-cols-fill-w-64`` ] ]
               [ viewWinRateWidget randomBattles ] ]
