@@ -83,6 +83,19 @@
           "Microsoft.NETCore.Platforms": "1.1.0"
         }
       },
+      "Thoth.Fetch": {
+        "type": "Direct",
+        "requested": "[2.0.0, )",
+        "resolved": "2.0.0",
+        "contentHash": "cJ+4DIb9HwmJAUVnHTicrG/ML0qSXUpzvgFRDBbQCiqJS9Sr043JJuiiabuMlLL7gmUFFMpSXYg/yrLKU5x0XA==",
+        "dependencies": {
+          "FSharp.Core": "4.7.0",
+          "Fable.Core": "3.1.5",
+          "Fable.Fetch": "2.1.0",
+          "Fable.Promise": "2.0.0",
+          "Thoth.Json": "4.0.0"
+        }
+      },
       "Thoth.Json": {
         "type": "Direct",
         "requested": "[4.1.0, )",
@@ -104,10 +117,10 @@
       },
       "Fable.Browser.Blob": {
         "type": "Transitive",
-        "resolved": "1.0.0",
-        "contentHash": "JqKAGjypePBNJrw/OAY5y00jo5v9bMXmwPKEju91otyUb7GKpCpBiW2YXVcbXK8GzaPFgyaKrMyH5KPJSN3pZg==",
+        "resolved": "1.1.0",
+        "contentHash": "xMX7hPFwBUGuj75xLlH6VsVThZjRlGW4zOqXb1X+byRPLSBE91vtn9EueNUB+YpGhE9LfrtakIPNGy+dkoMkjg==",
         "dependencies": {
-          "FSharp.Core": "4.5.2",
+          "FSharp.Core": "4.6.2",
           "Fable.Core": "3.0.0"
         }
       },
@@ -139,6 +152,26 @@
         "dependencies": {
           "FSharp.Core": "4.5.2",
           "Fable.Browser.Event": "1.0.0",
+          "Fable.Core": "3.0.0"
+        }
+      },
+      "Fable.Fetch": {
+        "type": "Transitive",
+        "resolved": "2.1.0",
+        "contentHash": "SxRmYAuVfHO3IBLk1CkV32L2jnaDxdcMu+Pe4EH+P2ErYrvgErp0QLUc56kaydWsLfQM86uft+NSapYS3FB0FA==",
+        "dependencies": {
+          "FSharp.Core": "4.6.2",
+          "Fable.Browser.Blob": "1.1.0",
+          "Fable.Core": "3.0.0",
+          "Fable.Promise": "2.0.0"
+        }
+      },
+      "Fable.Promise": {
+        "type": "Transitive",
+        "resolved": "2.0.0",
+        "contentHash": "rA9VD2uJTObnb8ghNmg/MTd8xMOJlVHmgNeKrP8SFMOP+tQ2tEDTf8xJ21HeR8ncuNxJP2CQkAfVlDxrLoHjZg==",
+        "dependencies": {
+          "FSharp.Core": "4.5.2",
           "Fable.Core": "3.0.0"
         }
       },

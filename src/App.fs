@@ -6,6 +6,7 @@ open Elmish
 open Elmish.React
 open Elmish.Debug
 
+open ExpectedValues
 open BattleResult
 open Protocol
 
@@ -25,6 +26,9 @@ type Msg =
     | ConnectionStateChanged of ConnectionState
     | GotInitResponse of InitResponse
     | GotSubscriptionNotification of SubscriptionNotification
+    | FetchExpectedValues
+    | GotExpectedValues of Map<int, ExpectedValuesGroup>
+    | FetchingExpectedValuesErrored
 
 open Thoth.Json
 
@@ -76,7 +80,10 @@ let init () =
           BattleResults = []
           BattleResultsOffset = 0 }
 
-    model, Cmd.ofMsg Connect
+    model,
+    Cmd.batch
+        [ Cmd.ofMsg Connect
+          Cmd.ofMsg FetchExpectedValues ]
 
 let update msg model =
     match msg with
@@ -103,6 +110,13 @@ let update msg model =
                   BattleResultsOffset = response.BattleResultsOffset
                   BattleResults = model.BattleResults @ response.BattleResults }
         newModel, Cmd.none
+
+    | FetchExpectedValues ->
+        model, Cmd.OfPromise.perform fetchExpectedValues () GotExpectedValues
+
+    | GotExpectedValues values -> model, Cmd.none
+
+    | FetchingExpectedValuesErrored -> model, Cmd.none
 
 open Fable.React
 open Fable.React.Props
