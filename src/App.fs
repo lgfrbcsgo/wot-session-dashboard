@@ -131,13 +131,15 @@ let viewStatusBar connectionState dispatch =
     match connectionState with
     | Subscribed -> nothing
     | Connecting ->
-        aside [ ClassNames [ tw.``bg-gray-900``; tw.``text-white``; tw.``p-2`` ] ]
-            [ h3 [ ClassName tw.``font-bold`` ] [ str "Connecting ..." ] ]
+        aside [ ClassNames [ tw.``bg-blue-400``; tw.``p-2`` ] ]
+            [ h3 []
+                  [ str "Connecting to battle results server "
+                    span [ ClassName tw.``font-bold`` ] [ str "..." ] ] ]
 
     | Disconnected ->
         aside
             [ ClassNames
-                [ tw.``bg-red-600``; tw.``p-2``; tw.``space-x-4``; tw.flex; tw.``items-center`` ] ]
+                [ tw.``bg-red-600``; tw.``p-2``; tw.``space-x-8``; tw.flex; tw.``items-center`` ] ]
             [ div [ ClassName tw.``flex-grow`` ]
                   [ h3 [ ClassName tw.``font-bold`` ] [ str "Disconnected." ]
                     p [] [ str "Could not connect to the battle results server. \
@@ -168,6 +170,8 @@ let view model dispatch =
 
     fragment []
         [ viewStatusBar model.ConnectionState dispatch
+          header [ ClassNames [ tw.``bg-gray-900``; tw.``text-white``; tw.``p-2`` ] ]
+              [ h1 [] [ str "WoT Session Dashboard" ] ]
           main
               [ ClassNames
                   [ tw.grid; tw.``grid-flow-row-dense``; tw.``grid-rows-h-48``; tw.``grid-cols-fill-w-64`` ] ]
