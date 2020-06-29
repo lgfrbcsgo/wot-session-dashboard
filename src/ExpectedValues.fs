@@ -10,7 +10,7 @@ type ExpectedValuesGroup =
       expDamage: float
       expWinRate: float }
 
-type ExpectedValues =
+type internal ExpectedValues =
     { data: ExpectedValuesGroup list }
 
 let fetchExpectedValues () =

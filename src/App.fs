@@ -16,8 +16,16 @@ type ConnectionState =
     | Disconnected
     | ProtocolError
 
+type LoadingState<'a> =
+    | Loading
+    | Loaded of 'a
+    | Errored
+
+type ExpectedValuesMap = Map<int, ExpectedValuesGroup>
+
 type Model =
     { ConnectionState: ConnectionState
+      ExpectedValues: ExpectedValuesMap LoadingState
       BattleResults: BattleResult list
       BattleResultsOffset: BattleResultsOffset }
 
@@ -27,7 +35,7 @@ type Msg =
     | GotInitResponse of InitResponse
     | GotSubscriptionNotification of SubscriptionNotification
     | FetchExpectedValues
-    | GotExpectedValues of Map<int, ExpectedValuesGroup>
+    | GotExpectedValues of ExpectedValuesMap
     | FetchingExpectedValuesErrored
 
 open Thoth.Json
@@ -77,6 +85,7 @@ let connectToServer battleResultsOffset dispatch =
 let init () =
     let model =
         { ConnectionState = Disconnected
+          ExpectedValues = Loading
           BattleResults = []
           BattleResultsOffset = 0 }
 
@@ -94,29 +103,26 @@ let update msg model =
         | _ -> model, Cmd.none
 
     | ConnectionStateChanged newState ->
-        let newModel = { model with ConnectionState = newState }
-        newModel, Cmd.none
+        { model with ConnectionState = newState }, Cmd.none
 
     | GotSubscriptionNotification notification ->
-        let newModel =
-            { model with
-                  BattleResultsOffset = notification.BattleResultsOffset
-                  BattleResults = model.BattleResults @ [ notification.BattleResult ] }
-        newModel, Cmd.none
+        { model with
+              BattleResultsOffset = notification.BattleResultsOffset
+              BattleResults = model.BattleResults @ [ notification.BattleResult ] }, Cmd.none
 
     | GotInitResponse response ->
-        let newModel =
-            { model with
-                  BattleResultsOffset = response.BattleResultsOffset
-                  BattleResults = model.BattleResults @ response.BattleResults }
-        newModel, Cmd.none
+        { model with
+              BattleResultsOffset = response.BattleResultsOffset
+              BattleResults = model.BattleResults @ response.BattleResults }, Cmd.none
 
     | FetchExpectedValues ->
-        model, Cmd.OfPromise.perform fetchExpectedValues () GotExpectedValues
+        { model with ExpectedValues = Loading },
+        Cmd.OfPromise.either fetchExpectedValues () GotExpectedValues
+            (fun _ -> FetchingExpectedValuesErrored)
 
-    | GotExpectedValues values -> model, Cmd.none
+    | GotExpectedValues values -> { model with ExpectedValues = Loaded values }, Cmd.none
 
-    | FetchingExpectedValuesErrored -> model, Cmd.none
+    | FetchingExpectedValuesErrored -> { model with ExpectedValues = Errored }, Cmd.none
 
 open Fable.React
 open Fable.React.Props
@@ -141,16 +147,29 @@ let viewWinRateWidget battles =
               [ h2 [ ClassName tw.``text-xl`` ] [ str "Win Rate" ]
                 p [ ClassName tw.``text-6xl`` ] [ formatWinRate winRate |> str ] ] ]
 
-let viewStatusBar connectionState dispatch =
-    match connectionState with
-    | Subscribed -> nothing
-    | Connecting ->
+let viewStatusBar model dispatch =
+    let viewButton label action =
+        button
+            [ OnClick(fun _ -> dispatch action)
+              ClassNames
+                  [ tw.``bg-gray-100``
+                    tw.``hover:bg-gray-300``
+                    tw.``text-sm``
+                    tw.``py-1``
+                    tw.``px-4``
+                    tw.``border-solid``
+                    tw.``border-2``
+                    tw.``border-gray-300``
+                    tw.rounded ] ] [ str label ]
+
+    match model.ConnectionState, model.ExpectedValues with
+    | Connecting, _ ->
         aside [ ClassNames [ tw.``bg-blue-400``; tw.``p-2`` ] ]
             [ h3 []
                   [ str "Connecting to battle results server "
                     span [ ClassName tw.``font-bold`` ] [ str "..." ] ] ]
 
-    | Disconnected ->
+    | Disconnected, _ ->
         aside
             [ ClassNames
                 [ tw.``bg-red-600``; tw.``p-2``; tw.``space-x-8``; tw.flex; tw.``items-center`` ] ]
@@ -159,31 +178,29 @@ let viewStatusBar connectionState dispatch =
                     p [] [ str "Could not connect to the battle results server. \
                                 Please make sure that WoT is running and that the battle \
                                 results server mod is installed correctly." ] ]
-              button
-                  [ OnClick(fun _ -> dispatch Connect)
-                    ClassNames
-                        [ tw.``bg-gray-100``
-                          tw.``hover:bg-gray-300``
-                          tw.``font-bold``
-                          tw.``py-2``
-                          tw.``px-4``
-                          tw.``border-solid``
-                          tw.``border-2``
-                          tw.``border-gray-300``
-                          tw.rounded ] ] [ str "Connect" ] ]
+              viewButton "Connect" Connect ]
 
-    | ProtocolError ->
+    | ProtocolError, _ ->
         aside [ ClassNames [ tw.``bg-red-600``; tw.``p-2`` ] ]
             [ h3 [ ClassName tw.``font-bold`` ] [ str "Oh no." ]
               p [] [ str "Something went wrong. Please make sure that the the latest version \
                           of the battle results server mod is installed." ] ]
+    | _, Errored ->
+        aside
+            [ ClassNames
+                [ tw.``bg-red-600``; tw.``p-2``; tw.``space-x-8``; tw.flex; tw.``items-center`` ] ]
+            [ h3 [ ClassName tw.``flex-grow`` ]
+                  [ str "Could not fetch expected values for WN8 calculation." ]
+              viewButton "Retry" FetchExpectedValues ]
+
+    | _, _ -> nothing
 
 let view model dispatch =
     let randomBattles =
         model.BattleResults |> List.filter BattleResult.isRandomBattle
 
     fragment []
-        [ viewStatusBar model.ConnectionState dispatch
+        [ viewStatusBar model dispatch
           header [ ClassNames [ tw.``bg-gray-900``; tw.``text-white``; tw.``p-2`` ] ]
               [ h1 [] [ str "WoT Session Dashboard" ] ]
           main
