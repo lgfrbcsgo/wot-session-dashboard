@@ -25,7 +25,8 @@
         <Compile Include="BattleResult.fs" />
         <Compile Include="Protocol.fs" />
         <Compile Include="ViewUtil.fs" />
-        <Compile Include="Css.fs" />
+        <Compile Include="Styles.fs" />
+        <Compile Include="Rating.fs" />
         <Compile Include="App.fs" />
     </ItemGroup>
 </Project>

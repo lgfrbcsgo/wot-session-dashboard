@@ -1,4 +1,4 @@
-﻿module Css
+﻿module Styles
 
 open Zanaptak.TypedCssClasses
 

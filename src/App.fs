@@ -99,12 +99,8 @@ let update msg model =
 
 open Fable.React
 open ViewUtil
-open Css
-
-let toPercentage n total =
-    if total = 0
-    then "N/A"
-    else float n / float total |> sprintf "%.0f%%"
+open Styles
+open Rating
 
 let view model dispatch =
     let randomBattles =
@@ -113,10 +109,11 @@ let view model dispatch =
     let victories =
         randomBattles |> List.filter BattleResult.isVictory
 
-    h1
-        [ ClassNames
-            [ tw.``text-6xl``; tw.``tracking-wide``; tw.``bg-r-unicum``; tw.``text-r-unicum-contrast`` ] ]
-        [ toPercentage (List.length victories) (List.length randomBattles) |> str ]
+    let winRate = calculateWinRate (List.length victories) (List.length randomBattles)
+    let winRateBg, winRateText = winRateClasses winRate
+
+    h1 [ ClassNames [ tw.``text-6xl``; tw.``tracking-wide``; winRateBg; winRateText ] ]
+        [ formatWinRate winRate |> str ]
 
 Program.mkProgram init update view
 |> Program.withReactBatched "elmish-app"
