@@ -112,8 +112,18 @@ let view model dispatch =
     let winRate = calculateWinRate (List.length victories) (List.length randomBattles)
     let winRateBg, winRateText = winRateClasses winRate
 
-    h1 [ ClassNames [ tw.``text-6xl``; tw.``tracking-wide``; winRateBg; winRateText ] ]
-        [ formatWinRate winRate |> str ]
+    div
+        [ ClassNames
+            [ tw.grid
+              tw.``grid-cols-1``
+              tw.``sm:grid-cols-2``
+              tw.``md:grid-cols-3``
+              tw.``lg:grid-cols-4``
+              tw.``xl:grid-cols-6`` ] ]
+        [ h1
+            [ ClassNames
+                [ tw.``col-span-1``; tw.``text-6xl``; tw.``tracking-wide``; winRateBg; winRateText ] ]
+              [ formatWinRate winRate |> str ] ]
 
 Program.mkProgram init update view
 |> Program.withReactBatched "elmish-app"

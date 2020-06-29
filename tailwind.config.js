@@ -1,5 +1,5 @@
 ﻿function rgb(red, green, blue) {
-    return { red: red, green: green, blue: blue };
+    return {red: red, green: green, blue: blue};
 }
 
 function renderColor(rgb) {
