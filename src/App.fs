@@ -21,8 +21,6 @@ type LoadingState<'a> =
     | Loaded of 'a
     | Errored
 
-type ExpectedValuesMap = Map<int, ExpectedValuesGroup>
-
 type Model =
     { ConnectionState: ConnectionState
       ExpectedValues: ExpectedValuesMap LoadingState
@@ -130,23 +128,6 @@ open ViewUtil
 open Styles
 open Rating
 
-let viewWinRateWidget battles =
-    let victories = List.filter BattleResult.isVictory battles
-    let winRate = calculateWinRate (List.length victories) (List.length battles)
-    let winRateBg, winRateText = winRateClasses winRate
-
-    section
-        [ ClassNames
-            [ tw.``col-span-1``
-              tw.``row-span-1``
-              winRateBg
-              tw.flex
-              tw.``items-center``
-              tw.``justify-center`` ] ]
-        [ div [ ClassNames [ tw.``text-center``; winRateText; tw.``leading-tight`` ] ]
-              [ h2 [ ClassName tw.``text-xl`` ] [ str "Win Rate" ]
-                p [ ClassName tw.``text-6xl`` ] [ formatWinRate winRate |> str ] ] ]
-
 let viewStatusBar model dispatch =
     let viewButton label action =
         button
@@ -194,6 +175,23 @@ let viewStatusBar model dispatch =
               viewButton "Retry" FetchExpectedValues ]
 
     | _, _ -> nothing
+
+let viewWinRateWidget battles =
+    let victories = List.filter BattleResult.isVictory battles
+    let winRate = calculateWinRate (List.length victories) (List.length battles)
+    let winRateBg, winRateText = winRateClasses winRate
+
+    section
+        [ ClassNames
+            [ tw.``col-span-1``
+              tw.``row-span-1``
+              winRateBg
+              tw.flex
+              tw.``items-center``
+              tw.``justify-center`` ] ]
+        [ div [ ClassNames [ tw.``text-center``; winRateText; tw.``leading-tight`` ] ]
+              [ h2 [ ClassName tw.``text-xl`` ] [ str "Win Rate" ]
+                p [ ClassName tw.``text-6xl`` ] [ formatWinRate winRate |> str ] ] ]
 
 let view model dispatch =
     let randomBattles =

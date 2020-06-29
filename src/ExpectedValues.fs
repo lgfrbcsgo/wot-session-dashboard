@@ -1,6 +1,7 @@
 ﻿module ExpectedValues
 
 open Thoth.Fetch
+open Fable.Core
 
 type ExpectedValuesGroup =
     { IDNum: int
@@ -13,7 +14,9 @@ type ExpectedValuesGroup =
 type internal ExpectedValues =
     { data: ExpectedValuesGroup list }
 
-let fetchExpectedValues () =
+type ExpectedValuesMap = Map<int, ExpectedValuesGroup>
+
+let fetchExpectedValues (): JS.Promise<ExpectedValuesMap> =
     promise {
         let! result =
             Fetch.get<_, ExpectedValues>
