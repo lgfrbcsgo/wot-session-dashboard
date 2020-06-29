@@ -124,7 +124,7 @@ let viewWinRateWidget battles =
               tw.``items-center``
               tw.``justify-center`` ] ]
         [ div [ ClassNames [ tw.``text-center``; winRateText; tw.``leading-tight`` ] ]
-              [ h2 [] [ str "Win Rate" ]
+              [ h2 [ ClassName tw.``text-xl`` ] [ str "Win Rate" ]
                 p [ ClassName tw.``text-6xl`` ] [ formatWinRate winRate |> str ] ] ]
 
 let viewStatusBar connectionState dispatch =
