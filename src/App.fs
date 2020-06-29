@@ -113,7 +113,9 @@ let view model dispatch =
     let victories =
         randomBattles |> List.filter BattleResult.isVictory
 
-    h1 [ ClassNames [ tw.``text-6xl``; tw.``tracking-wide`` ] ]
+    h1
+        [ ClassNames
+            [ tw.``text-6xl``; tw.``tracking-wide``; tw.``bg-r-unicum``; tw.``text-r-unicum-contrast`` ] ]
         [ toPercentage (List.length victories) (List.length randomBattles) |> str ]
 
 Program.mkProgram init update view
