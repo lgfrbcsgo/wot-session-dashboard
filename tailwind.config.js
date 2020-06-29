@@ -90,6 +90,6 @@ function contrastColor(color) {
 function mkColorPair(color) {
     return {
         default: renderColor(color),
-        contrast: renderColor(contrastColor(color)),
+        fg: renderColor(contrastColor(color)),
     };
 }

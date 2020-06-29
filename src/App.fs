@@ -98,31 +98,36 @@ let update msg model =
         newModel, Cmd.none
 
 open Fable.React
+open Fable.React.Props
 open ViewUtil
 open Styles
 open Rating
+
+let viewWinRateWidget battles =
+    let victories = List.filter BattleResult.isVictory battles
+    let winRate = calculateWinRate (List.length victories) (List.length battles)
+    let winRateBg, winRateText = winRateClasses winRate
+
+    section
+        [ ClassNames
+            [ tw.``col-span-1``
+              tw.``row-span-1``
+              winRateBg
+              tw.flex
+              tw.``items-center``
+              tw.``justify-center`` ] ]
+        [ div [ ClassNames [ tw.``text-center``; winRateText; tw.``leading-tight`` ] ]
+              [ h2 [] [ str "Win Rate" ]
+                p [ ClassName tw.``text-6xl`` ] [ formatWinRate winRate |> str ] ] ]
 
 let view model dispatch =
     let randomBattles =
         model.BattleResults |> List.filter BattleResult.isRandomBattle
 
-    let victories =
-        randomBattles |> List.filter BattleResult.isVictory
-
-    let winRate = calculateWinRate (List.length victories) (List.length randomBattles)
-    let winRateBg, winRateText = winRateClasses winRate
-
     div
         [ ClassNames
             [ tw.grid; tw.``grid-flow-row-dense``; tw.``grid-rows-h-48``; tw.``grid-cols-fill-w-64`` ] ]
-        [ h1
-            [ ClassNames
-                [ tw.``col-span-1``
-                  tw.``row-span-1``
-                  tw.``text-6xl``
-                  tw.``tracking-wide``
-                  winRateBg
-                  winRateText ] ] [ formatWinRate winRate |> str ] ]
+        [ viewWinRateWidget randomBattles ]
 
 Program.mkProgram init update view
 |> Program.withReactBatched "elmish-app"
