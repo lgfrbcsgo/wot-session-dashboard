@@ -24,7 +24,7 @@
         <Compile Include="DecoderExtra.fs" />
         <Compile Include="BattleResult.fs" />
         <Compile Include="Protocol.fs" />
-        <Compile Include="ReactUtil.fs" />
+        <Compile Include="ViewUtil.fs" />
         <Compile Include="Css.fs" />
         <Compile Include="App.fs" />
     </ItemGroup>

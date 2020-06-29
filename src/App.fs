@@ -13,7 +13,7 @@ type ConnectionState =
     | Connecting
     | Subscribed
     | Disconnected
-    | IncompatibleServerError
+    | ProtocolError
 
 type Model =
     { ConnectionState: ConnectionState
@@ -30,29 +30,27 @@ open Thoth.Json
 let connectToServer battleResultsOffset dispatch =
     let ws = WebSocket.Create "ws://localhost:15455"
 
-    let onOpen _ =
+    let onOpen () =
         { BattleResultsOffset = battleResultsOffset }
         |> InitRequest.encode
         |> Encode.toString 0
         |> ws.send
 
-    let onClose _ =
+    let onClose () =
         dispatch (ConnectionStateChanged Disconnected)
 
-    let noop _ = ()
-
-    let dispatchError () =
+    let onProtocolError () =
         // ignore close event to not dispatch another state change
-        ws.onclose <- noop
+        ws.onclose <- ignore
         ws.close ()
-        dispatch (ConnectionStateChanged IncompatibleServerError)
+        dispatch (ConnectionStateChanged ProtocolError)
 
     let onSubscriptionMessage (e: MessageEvent) =
         e.data
         |> unbox
         |> Decode.fromString SubscriptionNotification.decoder
         |> Result.map (GotSubscriptionNotification >> dispatch)
-        |> Result.mapError (ignore >> dispatchError)
+        |> Result.mapError (ignore >> onProtocolError)
 
     let onInitialMessage (e: MessageEvent) =
         e.data
@@ -63,10 +61,10 @@ let connectToServer battleResultsOffset dispatch =
             ws.onmessage <- onSubscriptionMessage
             dispatch (ConnectionStateChanged Subscribed)
             dispatch (GotInitResponse value))
-        |> Result.mapError (ignore >> dispatchError)
+        |> Result.mapError (ignore >> onProtocolError)
 
-    ws.onopen <- onOpen
-    ws.onclose <- onClose
+    ws.onopen <- (ignore >> onOpen)
+    ws.onclose <- (ignore >> onClose)
     ws.onmessage <- onInitialMessage
 
     dispatch (ConnectionStateChanged Connecting)
@@ -100,7 +98,7 @@ let update msg model =
         newModel, Cmd.none
 
 open Fable.React
-open ReactUtil
+open ViewUtil
 open Css
 
 let toPercentage n total =

@@ -1,4 +1,4 @@
-﻿module ReactUtil
+﻿module ViewUtil
 
 open Fable.React.Props
 
