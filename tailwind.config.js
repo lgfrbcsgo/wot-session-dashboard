@@ -42,7 +42,7 @@ module.exports = {
             }
 
             const utilities = mapTheme('height', mkUtility)
-            addUtilities(utilities, variants('height'));
+            addUtilities(utilities, variants('gridTemplateRows'));
         }),
         pluginExt(({addUtilities, mkCls, mapTheme, variants}) => {
             function mkUtility(modifier, value) {
@@ -55,7 +55,7 @@ module.exports = {
             }
 
             const utilities = mapTheme('width', mkUtility)
-            addUtilities(utilities, variants('width'));
+            addUtilities(utilities, variants('gridTemplateColumns'));
         }),
     ],
 }
