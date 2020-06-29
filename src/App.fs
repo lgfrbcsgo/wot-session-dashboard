@@ -21,6 +21,7 @@ type Model =
       BattleResultsOffset: BattleResultsOffset }
 
 type Msg =
+    | Connect
     | ConnectionStateChanged of ConnectionState
     | GotInitResponse of InitResponse
     | GotSubscriptionNotification of SubscriptionNotification
@@ -70,15 +71,21 @@ let connectToServer battleResultsOffset dispatch =
     dispatch (ConnectionStateChanged Connecting)
 
 let init () =
-    let state =
+    let model =
         { ConnectionState = Disconnected
           BattleResults = []
           BattleResultsOffset = 0 }
 
-    state, Cmd.ofSub (connectToServer state.BattleResultsOffset)
+    model, Cmd.ofMsg Connect
 
 let update msg model =
     match msg with
+    | Connect ->
+        match model.ConnectionState with
+        | Disconnected ->
+            model, Cmd.ofSub (connectToServer model.BattleResultsOffset)
+        | _ -> model, Cmd.none
+
     | ConnectionStateChanged newState ->
         let newModel = { model with ConnectionState = newState }
         newModel, Cmd.none
@@ -120,14 +127,51 @@ let viewWinRateWidget battles =
               [ h2 [] [ str "Win Rate" ]
                 p [ ClassName tw.``text-6xl`` ] [ formatWinRate winRate |> str ] ] ]
 
+let viewStatusBar connectionState dispatch =
+    match connectionState with
+    | Subscribed -> nothing
+    | Connecting ->
+        div [ ClassNames [ tw.``bg-gray-900``; tw.``text-white``; tw.``p-2`` ] ]
+            [ h3 [ ClassName tw.``font-bold`` ] [ str "Connecting ..." ] ]
+
+    | Disconnected ->
+        div
+            [ ClassNames
+                [ tw.``bg-red-600``; tw.``p-2``; tw.``space-x-4``; tw.flex; tw.``items-center`` ] ]
+            [ p [ ClassName tw.``flex-grow`` ]
+                  [ h3 [ ClassName tw.``font-bold`` ] [ str "Disconnected." ]
+                    p [] [ str "Could not connect to the battle results server. \
+                                Please make sure that WoT is running and that the battle \
+                                results server mod is installed correctly." ] ]
+              button
+                  [ OnClick (fun _ -> dispatch Connect)
+                    ClassNames
+                      [ tw.``bg-gray-100``
+                        tw.``hover:bg-gray-300``
+                        tw.``font-bold``
+                        tw.``py-2``
+                        tw.``px-4``
+                        tw.``border-solid``
+                        tw.``border-2``
+                        tw.``border-gray-300``
+                        tw.rounded ] ] [ str "Connect" ] ]
+
+    | ProtocolError ->
+        div [ ClassNames [ tw.``bg-red-600``; tw.``p-2`` ] ]
+            [ h3 [ ClassName tw.``font-bold`` ] [ str "Oh no." ]
+              p [] [ str "Something went wrong. Please make sure that the the latest version \
+                          of the battle results server mod is installed." ] ]
+
 let view model dispatch =
     let randomBattles =
         model.BattleResults |> List.filter BattleResult.isRandomBattle
 
-    div
-        [ ClassNames
-            [ tw.grid; tw.``grid-flow-row-dense``; tw.``grid-rows-h-48``; tw.``grid-cols-fill-w-64`` ] ]
-        [ viewWinRateWidget randomBattles ]
+    fragment []
+        [ viewStatusBar model.ConnectionState dispatch
+          div
+              [ ClassNames
+                  [ tw.grid; tw.``grid-flow-row-dense``; tw.``grid-rows-h-48``; tw.``grid-cols-fill-w-64`` ] ]
+              [ viewWinRateWidget randomBattles ] ]
 
 Program.mkProgram init update view
 |> Program.withReactBatched "elmish-app"
