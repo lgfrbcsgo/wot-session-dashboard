@@ -63,7 +63,7 @@ module.exports = ({ifDev, ifProd}) => ({
                 './public/index.html',
                 ...glob.sync('./src/**/*.fs', {nodir: true})
             ],
-            defaultExtractor: content => content.match(/[^<>"'`.\s]*[^<>"'`\s:]/g) || [],
+            defaultExtractor: content => content.match(/[\w-/:]+(?<!:)/g) || [],
         }),
         new BundleAnalyzerPlugin({
             analyzerMode: 'static',

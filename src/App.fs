@@ -114,16 +114,15 @@ let view model dispatch =
 
     div
         [ ClassNames
-            [ tw.grid
-              tw.``grid-cols-1``
-              tw.``sm:grid-cols-2``
-              tw.``md:grid-cols-3``
-              tw.``lg:grid-cols-4``
-              tw.``xl:grid-cols-6`` ] ]
+            [ tw.grid; tw.``grid-flow-row-dense``; tw.``grid-rows-h-48``; tw.``grid-cols-fill-w-64`` ] ]
         [ h1
             [ ClassNames
-                [ tw.``col-span-1``; tw.``text-6xl``; tw.``tracking-wide``; winRateBg; winRateText ] ]
-              [ formatWinRate winRate |> str ] ]
+                [ tw.``col-span-1``
+                  tw.``row-span-1``
+                  tw.``text-6xl``
+                  tw.``tracking-wide``
+                  winRateBg
+                  winRateText ] ] [ formatWinRate winRate |> str ] ]
 
 Program.mkProgram init update view
 |> Program.withReactBatched "elmish-app"
