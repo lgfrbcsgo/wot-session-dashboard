@@ -63,8 +63,9 @@ let calculateWn8 expectedValuesMap battles =
     for battle in battles do
         match battle.BonusType with
         | RandomBattle rnd ->
-            match Map.tryFind rnd.VehicleId expectedValuesMap with
-            | Some expectedValues ->
+            expectedValuesMap
+            |> Map.tryFind rnd.VehicleId
+            |> Option.iter (fun expectedValues ->
                 totalDmg <- totalDmg + rnd.DamageDealt
                 totalSpot <- totalSpot + rnd.Spots
                 totalFrag <- totalFrag + rnd.Frags
@@ -78,8 +79,7 @@ let calculateWn8 expectedValuesMap battles =
                 expSpot <- expSpot + expectedValues.SpotsTarget
                 expFrag <- expFrag + expectedValues.FragsTarget
                 expDef <- expDef + expectedValues.DefencePointsTarget
-                expWin <- expWin + expectedValues.WinRateTarget
-            | None -> ()
+                expWin <- expWin + expectedValues.WinRateTarget)
         | _ -> ()
 
     match expDmg, expSpot, expFrag, expDef, expWin with
