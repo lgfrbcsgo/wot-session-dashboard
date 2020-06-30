@@ -25,7 +25,7 @@
         <Compile Include="DecoderExtra.fs" />
         <Compile Include="BattleResult.fs" />
         <Compile Include="Protocol.fs" />
-        <Compile Include="ViewUtil.fs" />
+        <Compile Include="Util.fs" />
         <Compile Include="Styles.fs" />
         <Compile Include="ExpectedValues.fs" />
         <Compile Include="Rating.fs" />

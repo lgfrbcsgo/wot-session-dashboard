@@ -25,3 +25,8 @@ module Decode =
             then return! Decode.succeed ()
             else return! sprintf "Expected %s to be %s." actual expected |> Decode.fail
         }
+        
+    let fromOption errorMsg option =
+        match option with
+        | Some value -> Decode.succeed value
+        | None -> Decode.fail errorMsg

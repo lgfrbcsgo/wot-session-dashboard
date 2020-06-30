@@ -23,7 +23,7 @@ type LoadingState<'a> =
 
 type Model =
     { ConnectionState: ConnectionState
-      ExpectedValues: ExpectedValuesMap LoadingState
+      ExpectedValues: Map<VehicleId, Wn8ValuesGroup> LoadingState
       BattleResults: BattleResult list
       BattleResultsOffset: BattleResultsOffset }
 
@@ -33,7 +33,7 @@ type Msg =
     | GotInitResponse of InitResponse
     | GotSubscriptionNotification of SubscriptionNotification
     | FetchExpectedValues
-    | GotExpectedValues of ExpectedValuesMap
+    | GotExpectedValues of Map<VehicleId, Wn8ValuesGroup>
     | FetchingExpectedValuesErrored
 
 open Thoth.Json
@@ -124,7 +124,7 @@ let update msg model =
 
 open Fable.React
 open Fable.React.Props
-open ViewUtil
+open Util
 open Styles
 open Rating
 
@@ -177,8 +177,7 @@ let viewStatusBar model dispatch =
     | _, _ -> nothing
 
 let viewWinRateWidget battles =
-    let victories = List.filter BattleResult.isVictory battles
-    let winRate = calculateWinRate (List.length victories) (List.length battles)
+    let winRate = calculateWinRate battles
     let winRateBg, winRateText = winRateClasses winRate
 
     section
@@ -195,7 +194,11 @@ let viewWinRateWidget battles =
 
 let view model dispatch =
     let randomBattles =
-        model.BattleResults |> List.filter BattleResult.isRandomBattle
+        model.BattleResults
+        |> List.filter (fun battle ->
+            match battle.BonusType with
+            | RandomBattle -> true
+            | _ -> false)
 
     fragment []
         [ viewStatusBar model dispatch
