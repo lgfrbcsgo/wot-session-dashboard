@@ -191,10 +191,10 @@ let viewWinRateWidget model =
 
     let winRate = calculateWinRate randomBattles
 
-    let winRateBgColor, winRateTextColor =
+    let colors =
         winRate
         |> Option.map winRateColorClasses
-        |> Option.defaultValue (tw.``bg-black``, tw.``text-white``)
+        |> Option.defaultValue NO_DATA
 
     let winRateText =
         winRate
@@ -205,11 +205,11 @@ let viewWinRateWidget model =
         [ ClassNames
             [ tw.``col-span-1``
               tw.``row-span-1``
-              winRateBgColor
+              colors.Background
               tw.flex
               tw.``items-center``
               tw.``justify-center`` ] ]
-        [ div [ ClassNames [ tw.``text-center``; winRateTextColor; tw.``leading-tight`` ] ]
+        [ div [ ClassNames [ tw.``text-center``; colors.Text; tw.``leading-tight`` ] ]
               [ h2 [ ClassName tw.``text-xl`` ] [ str "Win Rate" ]
                 p [ ClassName tw.``text-6xl`` ] [ str winRateText ] ] ]
 
@@ -219,10 +219,10 @@ let viewWn8Widget model =
         | Loaded expectedValuesMap -> calculateWn8 expectedValuesMap model.BattleResults
         | _ -> None
 
-    let wn8BgColor, wn8TextColor =
+    let colors =
         wn8
         |> Option.map wn8ColorClasses
-        |> Option.defaultValue (tw.``bg-black``, tw.``text-white``)
+        |> Option.defaultValue NO_DATA
 
     let wn8Text =
         wn8
@@ -233,11 +233,11 @@ let viewWn8Widget model =
         [ ClassNames
             [ tw.``col-span-1``
               tw.``row-span-1``
-              wn8BgColor
+              colors.Background
               tw.flex
               tw.``items-center``
               tw.``justify-center`` ] ]
-        [ div [ ClassNames [ tw.``text-center``; wn8TextColor; tw.``leading-tight`` ] ]
+        [ div [ ClassNames [ tw.``text-center``; colors.Text; tw.``leading-tight`` ] ]
               [ h2 [ ClassName tw.``text-xl`` ] [ str "WN8" ]
                 p [ ClassName tw.``text-6xl`` ] [ str wn8Text ] ] ]
 

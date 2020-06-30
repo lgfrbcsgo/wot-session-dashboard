@@ -4,20 +4,64 @@ open Styles
 open ExpectedValues
 open BattleResult
 
+type RatingColor =
+    { Background: string
+      Text: string }
+
+let NO_DATA =
+    { Background = tw.``bg-black``
+      Text = tw.``text-white`` }
+    
+let VERY_BAD =
+    { Background = tw.``bg-r-very-bad``
+      Text = tw.``text-r-very-bad-fg`` }
+
+let BAD =
+    { Background = tw.``bg-r-bad``
+      Text = tw.``text-r-bad-fg`` }
+
+let BELOW_AVERAGE =
+    { Background = tw.``bg-r-below-average``
+      Text = tw.``text-r-below-average-fg`` }
+
+let AVERAGE =
+    { Background = tw.``bg-r-average``
+      Text = tw.``text-r-average-fg`` }
+
+let GOOD =
+    { Background = tw.``bg-r-good``
+      Text = tw.``text-r-good-fg`` }
+
+let VERY_GOOD =
+    { Background = tw.``bg-r-very-good``
+      Text = tw.``text-r-very-good-fg`` }
+
+let GREAT =
+    { Background = tw.``bg-r-great``
+      Text = tw.``text-r-great-fg`` }
+
+let UNICUM =
+    { Background = tw.``bg-r-unicum``
+      Text = tw.``text-r-unicum-fg`` }
+
+let SUPER_UNICUM =
+    { Background = tw.``bg-r-super-unicum``
+      Text = tw.``text-r-super-unicum-fg`` }
+
 let (|Below|_|) threshold n =
     if n < threshold then Some() else None
 
 let winRateColorClasses winRate =
     match winRate with
-    | Below 0.45 -> tw.``bg-r-very-bad``, tw.``text-r-very-bad-fg``
-    | Below 0.47 -> tw.``bg-r-bad``, tw.``text-r-bad-fg``
-    | Below 0.49 -> tw.``bg-r-below-average``, tw.``text-r-below-average-fg``
-    | Below 0.52 -> tw.``bg-r-average``, tw.``text-r-average-fg``
-    | Below 0.54 -> tw.``bg-r-good``, tw.``text-r-good-fg``
-    | Below 0.56 -> tw.``bg-r-very-good``, tw.``text-r-very-good-fg``
-    | Below 0.60 -> tw.``bg-r-great``, tw.``text-r-great-fg``
-    | Below 0.65 -> tw.``bg-r-unicum``, tw.``text-r-unicum-fg``
-    | _ -> tw.``bg-r-super-unicum``, tw.``text-r-super-unicum-fg``
+    | Below 0.45 -> VERY_BAD
+    | Below 0.47 -> BAD
+    | Below 0.49 -> BELOW_AVERAGE
+    | Below 0.52 -> AVERAGE
+    | Below 0.54 -> GOOD
+    | Below 0.56 -> VERY_GOOD
+    | Below 0.60 -> GREAT
+    | Below 0.65 -> UNICUM
+    | _ -> SUPER_UNICUM
 
 let calculateWinRate battles =
     match battles with
@@ -37,15 +81,15 @@ let formatWinRate winRate =
 
 let wn8ColorClasses winRate =
     match winRate with
-    | Below 300. -> tw.``bg-r-very-bad``, tw.``text-r-very-bad-fg``
-    | Below 600. -> tw.``bg-r-bad``, tw.``text-r-bad-fg``
-    | Below 900. -> tw.``bg-r-below-average``, tw.``text-r-below-average-fg``
-    | Below 1250. -> tw.``bg-r-average``, tw.``text-r-average-fg``
-    | Below 1600. -> tw.``bg-r-good``, tw.``text-r-good-fg``
-    | Below 1900. -> tw.``bg-r-very-good``, tw.``text-r-very-good-fg``
-    | Below 2350. -> tw.``bg-r-great``, tw.``text-r-great-fg``
-    | Below 2900. -> tw.``bg-r-unicum``, tw.``text-r-unicum-fg``
-    | _ -> tw.``bg-r-super-unicum``, tw.``text-r-super-unicum-fg``
+    | Below 300. -> VERY_BAD
+    | Below 600. -> BAD
+    | Below 900. -> BELOW_AVERAGE
+    | Below 1250. -> AVERAGE
+    | Below 1600. -> GOOD
+    | Below 1900. -> VERY_GOOD
+    | Below 2350. -> GREAT
+    | Below 2900. -> UNICUM
+    | _ -> SUPER_UNICUM
 
 let calculateWn8 expectedValuesMap battles =
     let mutable totalDmg = 0
