@@ -156,16 +156,25 @@ let viewStatusBar model dispatch =
                 [ tw.``bg-red-600``; tw.``p-2``; tw.``space-x-8``; tw.flex; tw.``items-center`` ] ]
             [ div [ ClassName tw.``flex-grow`` ]
                   [ h3 [ ClassName tw.``font-bold`` ] [ str "Disconnected." ]
-                    p [] [ str "Could not connect to the battle results server. \
-                                Please make sure that WoT is running and that the battle \
-                                results server mod is installed correctly." ] ]
+                    p []
+                        [ str "Could not connect to the battle results server. \
+                                Please make sure that WoT is running and that the "
+                          a
+                              [ Href "https://wgmods.net/4662/"
+                                ClassName tw.underline ] [ str "Battle Results Server" ]
+                          str " mod is installed correctly." ] ]
               viewButton "Connect" Connect ]
 
     | ProtocolError, _ ->
         aside [ ClassNames [ tw.``bg-red-600``; tw.``p-2`` ] ]
             [ h3 [ ClassName tw.``font-bold`` ] [ str "Oh no." ]
-              p [] [ str "Something went wrong. Please make sure that the the latest version \
-                          of the battle results server mod is installed." ] ]
+              p []
+                  [ str "Something went wrong. Please make sure that the the latest version of the "
+                    a
+                        [ Href "https://wgmods.net/4662/"
+                          ClassName tw.underline ] [ str "Battle Results Server" ]
+                    str " mod is installed." ] ]
+
     | _, Errored ->
         aside
             [ ClassNames
@@ -181,6 +190,7 @@ let viewWinRateWidget model =
         model.BattleResults |> List.filter BattleResult.isRandomBattle
 
     let winRate = calculateWinRate randomBattles
+
     let winRateBgColor, winRateTextColor =
         winRate
         |> Option.map winRateColorClasses
