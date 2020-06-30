@@ -23,7 +23,7 @@ type LoadingState<'a> =
 
 type Model =
     { ConnectionState: ConnectionState
-      ExpectedValues: Map<VehicleId, Wn8ValuesGroup> LoadingState
+      ExpectedValues: Map<VehicleId, ExpectedValues> LoadingState
       BattleResults: BattleResult list
       BattleResultsOffset: BattleResultsOffset }
 
@@ -33,7 +33,7 @@ type Msg =
     | GotInitResponse of InitResponse
     | GotSubscriptionNotification of SubscriptionNotification
     | FetchExpectedValues
-    | GotExpectedValues of Map<VehicleId, Wn8ValuesGroup>
+    | GotExpectedValues of Map<VehicleId, ExpectedValues>
     | FetchingExpectedValuesErrored
 
 open Thoth.Json
@@ -115,7 +115,7 @@ let update msg model =
 
     | FetchExpectedValues ->
         { model with ExpectedValues = Loading },
-        Cmd.OfPromise.either fetchExpectedValues () GotExpectedValues
+        Cmd.OfPromise.either fetchExpectedValuesMap () GotExpectedValues
             (fun _ -> FetchingExpectedValuesErrored)
 
     | GotExpectedValues values -> { model with ExpectedValues = Loaded values }, Cmd.none
@@ -192,6 +192,22 @@ let viewWinRateWidget battles =
               [ h2 [ ClassName tw.``text-xl`` ] [ str "Win Rate" ]
                 p [ ClassName tw.``text-6xl`` ] [ formatWinRate winRate |> str ] ] ]
 
+let viewWn8Widget expectedValuesMap battles =
+    let wn8 = calculateWn8 expectedValuesMap battles
+    let winRateBg, winRateText = wn8Classes wn8
+
+    section
+        [ ClassNames
+            [ tw.``col-span-1``
+              tw.``row-span-1``
+              winRateBg
+              tw.flex
+              tw.``items-center``
+              tw.``justify-center`` ] ]
+        [ div [ ClassNames [ tw.``text-center``; winRateText; tw.``leading-tight`` ] ]
+              [ h2 [ ClassName tw.``text-xl`` ] [ str "WN8" ]
+                p [ ClassName tw.``text-6xl`` ] [ formatWn8 wn8 |> str ] ] ]
+
 let view model dispatch =
     let randomBattles =
         model.BattleResults
@@ -200,6 +216,11 @@ let view model dispatch =
             | RandomBattle -> true
             | _ -> false)
 
+    let expectedValues =
+        match model.ExpectedValues with
+        | Loaded expectedValues -> expectedValues
+        | _ -> Map.empty
+
     fragment []
         [ viewStatusBar model dispatch
           header [ ClassNames [ tw.``bg-gray-900``; tw.``text-white``; tw.``p-2`` ] ]
@@ -207,7 +228,8 @@ let view model dispatch =
           main
               [ ClassNames
                   [ tw.grid; tw.``grid-flow-row-dense``; tw.``grid-rows-h-48``; tw.``grid-cols-fill-w-64`` ] ]
-              [ viewWinRateWidget randomBattles ] ]
+              [ viewWinRateWidget randomBattles
+                viewWn8Widget expectedValues randomBattles ] ]
 
 Program.mkProgram init update view
 |> Program.withReactBatched "elmish-app"

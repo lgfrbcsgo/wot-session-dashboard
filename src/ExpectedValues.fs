@@ -5,14 +5,14 @@ open Thoth.Json
 open DecoderExtra
 open BattleResult
 
-type Wn8ValuesGroup =
+type ExpectedValues =
     { DamageDealtTarget: float
       SpotsTarget: float
       FragsTarget: float
       DefencePointsTarget: float
       WinRateTarget: float }
 
-let internal decodeExpectedValues =
+let internal decodeExpectedValuesMap =
     decoder {
         let! vehicleId = Decode.field "IDNum" Decode.int
         let! avgDamageDealt = Decode.field "expDamage" Decode.float
@@ -32,7 +32,7 @@ let internal decodeExpectedValues =
     |> Decode.field "data"
     |> Decode.map Map.ofList
 
-let fetchExpectedValues () =
+let fetchExpectedValuesMap () =
     Fetch.get
-        ("https://static.modxvm.com/wn8-data-exp/json/wn8exp.json", decoder = decodeExpectedValues)
+        ("https://static.modxvm.com/wn8-data-exp/json/wn8exp.json", decoder = decodeExpectedValuesMap)
 

@@ -3,7 +3,6 @@
 open Styles
 open ExpectedValues
 open BattleResult
-open Util
 
 let (|N_A|_|) n =
     if System.Double.IsNaN(n) || n = infinity || n = -infinity
@@ -41,55 +40,62 @@ let formatWinRate winRate =
     | N_A _ -> "N/A"
     | f -> sprintf "%.0f%%" (f * 100.)
 
-let internal getActualValues battle =
-    let winRate =
-        match battle.Outcome with
-        | Victory -> 1.
-        | DrawOrLoss -> 0.
+let wn8Classes winRate =
+    match winRate with
+    | N_A _
+    | Below 300. _ -> tw.``bg-r-very-bad``, tw.``text-r-very-bad-fg``
+    | Below 600. _ -> tw.``bg-r-bad``, tw.``text-r-bad-fg``
+    | Below 900. _ -> tw.``bg-r-below-average``, tw.``text-r-below-average-fg``
+    | Below 1250. _ -> tw.``bg-r-average``, tw.``text-r-average-fg``
+    | Below 1600. _ -> tw.``bg-r-good``, tw.``text-r-good-fg``
+    | Below 1900. _ -> tw.``bg-r-very-good``, tw.``text-r-very-good-fg``
+    | Below 2350. _ -> tw.``bg-r-great``, tw.``text-r-great-fg``
+    | Below 2900. _ -> tw.``bg-r-unicum``, tw.``text-r-unicum-fg``
+    | _ -> tw.``bg-r-super-unicum``, tw.``text-r-super-unicum-fg``
 
-    match battle.BonusType with
-    | RandomBattle rnd ->
-        Some
-            (rnd.VehicleId,
-             { DamageDealtTarget = float rnd.DamageDealt
-               SpotsTarget = float rnd.Spots
-               FragsTarget = float rnd.Frags
-               DefencePointsTarget = float rnd.DefencePoints
-               WinRateTarget = winRate })
-    | _ -> None
+let calculateWn8 expectedValuesMap battles =
+    let mutable totalDmg = 0
+    let mutable totalSpot = 0
+    let mutable totalFrag = 0
+    let mutable totalDef = 0
+    let mutable totalWin = 0
 
-let internal getActualAndExpected expectedValuesMap battle =
-    option {
-        let! vehicleId, actual = getActualValues battle
-        let! expected = Map.tryFind vehicleId expectedValuesMap
-        return actual, expected }
+    let mutable expDmg = 0.
+    let mutable expSpot = 0.
+    let mutable expFrag = 0.
+    let mutable expDef = 0.
+    let mutable expWin = 0.
 
-let internal addValues a b =
-    { DamageDealtTarget = a.DamageDealtTarget + b.DamageDealtTarget
-      SpotsTarget = a.SpotsTarget + b.SpotsTarget
-      FragsTarget = a.FragsTarget + b.FragsTarget
-      DefencePointsTarget = a.DefencePointsTarget + b.DefencePointsTarget
-      WinRateTarget = a.WinRateTarget + b.WinRateTarget }
+    for battle in battles do
+        match battle.BonusType with
+        | RandomBattle rnd ->
+            match Map.tryFind rnd.VehicleId expectedValuesMap with
+            | Some expectedValues ->
+                totalDmg <- totalDmg + rnd.DamageDealt
+                totalSpot <- totalSpot + rnd.Spots
+                totalFrag <- totalFrag + rnd.Frags
+                totalDef <- totalDef + rnd.DefencePoints
+                totalWin <-
+                    match battle.Outcome with
+                    | Victory -> totalWin + 1
+                    | _ -> totalWin
+                    
+                expDmg <- expDmg + expectedValues.DamageDealtTarget
+                expSpot <- expSpot + expectedValues.SpotsTarget
+                expFrag <- expFrag + expectedValues.FragsTarget
+                expDef <- expDef + expectedValues.DefencePointsTarget
+                expWin <- expWin + expectedValues.WinRateTarget
+            | None -> ()
+        | _ -> ()
 
-let internal averageValues values =
-    let total = List.reduce addValues values
-    let n = float (List.length values)
+    let rDAMAGE = float totalDmg / expDmg
+    let rSPOT = float totalSpot / expSpot
+    let rFRAG = float totalFrag / expFrag
+    let rDEF = float totalDef / expDef
+    let rWIN = float totalWin / expWin
 
-    { DamageDealtTarget = total.DamageDealtTarget / n
-      SpotsTarget = total.SpotsTarget / n
-      FragsTarget = total.FragsTarget / n
-      DefencePointsTarget = total.DefencePointsTarget / n
-      WinRateTarget = total.WinRateTarget / n }
-
-let internal calculateWn8Formula actualValues expectedValues =
     let normalizeValue rSTAT constant =
         (rSTAT - constant) / (1. - constant)
-    
-    let rDAMAGE = actualValues.DamageDealtTarget / expectedValues.DamageDealtTarget
-    let rSPOT = actualValues.SpotsTarget / expectedValues.SpotsTarget
-    let rFRAG = actualValues.FragsTarget / expectedValues.FragsTarget
-    let rDEF = actualValues.DefencePointsTarget / expectedValues.DefencePointsTarget
-    let rWIN = actualValues.WinRateTarget / expectedValues.WinRateTarget
 
     let rWINc = max 0. (normalizeValue rWIN 0.71)
     let rDAMAGEc = max 0. (normalizeValue rDAMAGE 0.22)
@@ -99,14 +105,8 @@ let internal calculateWn8Formula actualValues expectedValues =
 
     980. * rDAMAGEc + 210. * rDAMAGEc * rFRAGc + 155. * rFRAGc * rSPOTc + 75. * rDEFc * rFRAGc
     + 14.5 * (min 1.8 rWINc)
-
-let calculateWn8 expectedValuesMap battles =
-    let actualValues, expectedValues =
-        battles
-        |> List.choose (getActualAndExpected expectedValuesMap)
-        |> List.unzip
-
-    let actualValuesAvg = averageValues actualValues
-    let expectedValuesAvg = averageValues expectedValues
-
-    calculateWn8Formula actualValuesAvg expectedValuesAvg
+    
+let formatWn8 wn8 =
+    match wn8 with
+    | N_A _ -> "N/A"
+    | f -> sprintf "%.0f" f
