@@ -83,8 +83,24 @@ function renderColor(rgb) {
 }
 
 function contrastColor(color) {
-    const brightness = (color.red * 299 + color.green * 587 + color.blue * 114) / 1000;
-    return brightness < 125 ? rgb(255, 255, 255) : rgb(0, 0, 0);
+    function normalizeColor(c_srgb) {
+        if (c_srgb <= 0.03928) {
+            return c_srgb / 12.92;
+        } else {
+            return Math.pow((c_srgb + 0.055) / 1.055, 2.4);
+        }
+    }
+
+    const L =
+        0.2126 * normalizeColor(color.red / 255)
+        + 0.7152 * normalizeColor(color.green / 255)
+        + 0.0722 * normalizeColor(color.blue / 255);
+    
+    if ((L + 0.05) / 0.05 > 1.05 / (L + 0.05)) {
+        return rgb(0, 0, 0);
+    } else {
+        return rgb(255, 255, 255);
+    }
 }
 
 function mkColorPair(color) {
