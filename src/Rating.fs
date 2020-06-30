@@ -4,53 +4,47 @@ open Styles
 open ExpectedValues
 open BattleResult
 
-let (|N_A|_|) n =
-    if System.Double.IsNaN(n) || n = infinity || n = -infinity
-    then Some n
-    else None
-
 let (|Below|_|) threshold n =
-    if n < threshold then Some n else None
+    if n < threshold then Some() else None
 
-let winRateClasses winRate =
+let winRateColorClasses winRate =
     match winRate with
-    | N_A _
-    | Below 0.45 _ -> tw.``bg-r-very-bad``, tw.``text-r-very-bad-fg``
-    | Below 0.47 _ -> tw.``bg-r-bad``, tw.``text-r-bad-fg``
-    | Below 0.49 _ -> tw.``bg-r-below-average``, tw.``text-r-below-average-fg``
-    | Below 0.52 _ -> tw.``bg-r-average``, tw.``text-r-average-fg``
-    | Below 0.54 _ -> tw.``bg-r-good``, tw.``text-r-good-fg``
-    | Below 0.56 _ -> tw.``bg-r-very-good``, tw.``text-r-very-good-fg``
-    | Below 0.60 _ -> tw.``bg-r-great``, tw.``text-r-great-fg``
-    | Below 0.65 _ -> tw.``bg-r-unicum``, tw.``text-r-unicum-fg``
+    | Below 0.45 -> tw.``bg-r-very-bad``, tw.``text-r-very-bad-fg``
+    | Below 0.47 -> tw.``bg-r-bad``, tw.``text-r-bad-fg``
+    | Below 0.49 -> tw.``bg-r-below-average``, tw.``text-r-below-average-fg``
+    | Below 0.52 -> tw.``bg-r-average``, tw.``text-r-average-fg``
+    | Below 0.54 -> tw.``bg-r-good``, tw.``text-r-good-fg``
+    | Below 0.56 -> tw.``bg-r-very-good``, tw.``text-r-very-good-fg``
+    | Below 0.60 -> tw.``bg-r-great``, tw.``text-r-great-fg``
+    | Below 0.65 -> tw.``bg-r-unicum``, tw.``text-r-unicum-fg``
     | _ -> tw.``bg-r-super-unicum``, tw.``text-r-super-unicum-fg``
 
 let calculateWinRate battles =
-    let victories =
-        battles
-        |> List.filter (fun battle ->
+    match battles with
+    | [] -> None
+    | _ ->
+        let isVictory battle =
             match battle.Outcome with
             | Victory -> true
-            | DrawOrLoss -> false)
+            | DrawOrLoss -> false
 
-    float (List.length victories) / float (List.length battles)
+        let victories = List.filter isVictory battles
+        let winRate = float (List.length victories) / float (List.length battles)
+        Some winRate
 
 let formatWinRate winRate =
-    match winRate with
-    | N_A _ -> "N/A"
-    | f -> sprintf "%.0f%%" (f * 100.)
+    sprintf "%.0f%%" (winRate * 100.)
 
-let wn8Classes winRate =
+let wn8ColorClasses winRate =
     match winRate with
-    | N_A _
-    | Below 300. _ -> tw.``bg-r-very-bad``, tw.``text-r-very-bad-fg``
-    | Below 600. _ -> tw.``bg-r-bad``, tw.``text-r-bad-fg``
-    | Below 900. _ -> tw.``bg-r-below-average``, tw.``text-r-below-average-fg``
-    | Below 1250. _ -> tw.``bg-r-average``, tw.``text-r-average-fg``
-    | Below 1600. _ -> tw.``bg-r-good``, tw.``text-r-good-fg``
-    | Below 1900. _ -> tw.``bg-r-very-good``, tw.``text-r-very-good-fg``
-    | Below 2350. _ -> tw.``bg-r-great``, tw.``text-r-great-fg``
-    | Below 2900. _ -> tw.``bg-r-unicum``, tw.``text-r-unicum-fg``
+    | Below 300. -> tw.``bg-r-very-bad``, tw.``text-r-very-bad-fg``
+    | Below 600. -> tw.``bg-r-bad``, tw.``text-r-bad-fg``
+    | Below 900. -> tw.``bg-r-below-average``, tw.``text-r-below-average-fg``
+    | Below 1250. -> tw.``bg-r-average``, tw.``text-r-average-fg``
+    | Below 1600. -> tw.``bg-r-good``, tw.``text-r-good-fg``
+    | Below 1900. -> tw.``bg-r-very-good``, tw.``text-r-very-good-fg``
+    | Below 2350. -> tw.``bg-r-great``, tw.``text-r-great-fg``
+    | Below 2900. -> tw.``bg-r-unicum``, tw.``text-r-unicum-fg``
     | _ -> tw.``bg-r-super-unicum``, tw.``text-r-super-unicum-fg``
 
 let calculateWn8 expectedValuesMap battles =
@@ -79,7 +73,7 @@ let calculateWn8 expectedValuesMap battles =
                     match battle.Outcome with
                     | Victory -> totalWin + 1
                     | _ -> totalWin
-                    
+
                 expDmg <- expDmg + expectedValues.DamageDealtTarget
                 expSpot <- expSpot + expectedValues.SpotsTarget
                 expFrag <- expFrag + expectedValues.FragsTarget
@@ -88,25 +82,28 @@ let calculateWn8 expectedValuesMap battles =
             | None -> ()
         | _ -> ()
 
-    let rDAMAGE = float totalDmg / expDmg
-    let rSPOT = float totalSpot / expSpot
-    let rFRAG = float totalFrag / expFrag
-    let rDEF = float totalDef / expDef
-    let rWIN = float totalWin / expWin
+    match expDmg, expSpot, expFrag, expDef, expWin with
+    | 0., 0., 0., 0., 0. -> None
+    | _ ->
+        let rDAMAGE = float totalDmg / expDmg
+        let rSPOT = float totalSpot / expSpot
+        let rFRAG = float totalFrag / expFrag
+        let rDEF = float totalDef / expDef
+        let rWIN = float totalWin / expWin
 
-    let normalizeValue rSTAT constant =
-        (rSTAT - constant) / (1. - constant)
+        let normalizeValue rSTAT constant =
+            (rSTAT - constant) / (1. - constant)
 
-    let rWINc = max 0. (normalizeValue rWIN 0.71)
-    let rDAMAGEc = max 0. (normalizeValue rDAMAGE 0.22)
-    let rFRAGc = max 0. (min (rDAMAGEc + 0.2) (normalizeValue rFRAG 0.12))
-    let rSPOTc = max 0. (min (rDAMAGEc + 0.1) (normalizeValue rSPOT 0.38))
-    let rDEFc = max 0. (min (rDAMAGEc + 0.1) (normalizeValue rDEF 0.1))
+        let rWINc = max 0. (normalizeValue rWIN 0.71)
+        let rDAMAGEc = max 0. (normalizeValue rDAMAGE 0.22)
+        let rFRAGc = max 0. (min (rDAMAGEc + 0.2) (normalizeValue rFRAG 0.12))
+        let rSPOTc = max 0. (min (rDAMAGEc + 0.1) (normalizeValue rSPOT 0.38))
+        let rDEFc = max 0. (min (rDAMAGEc + 0.1) (normalizeValue rDEF 0.1))
 
-    980. * rDAMAGEc + 210. * rDAMAGEc * rFRAGc + 155. * rFRAGc * rSPOTc + 75. * rDEFc * rFRAGc
-    + 14.5 * (min 1.8 rWINc)
-    
+        let wn8 =
+            980. * rDAMAGEc + 210. * rDAMAGEc * rFRAGc + 155. * rFRAGc * rSPOTc
+            + 75. * rDEFc * rFRAGc + 14.5 * (min 1.8 rWINc)
+        Some wn8
+
 let formatWn8 wn8 =
-    match wn8 with
-    | N_A _ -> "N/A"
-    | f -> sprintf "%.0f" f
+    sprintf "%.0f" wn8

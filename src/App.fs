@@ -176,51 +176,62 @@ let viewStatusBar model dispatch =
 
     | _, _ -> nothing
 
-let viewWinRateWidget battles =
-    let winRate = calculateWinRate battles
-    let winRateBg, winRateText = winRateClasses winRate
+let viewWinRateWidget model =
+    let randomBattles =
+        model.BattleResults |> List.filter BattleResult.isRandomBattle
+
+    let winRate = calculateWinRate randomBattles
+    let winRateBgColor, winRateTextColor =
+        winRate
+        |> Option.map winRateColorClasses
+        |> Option.defaultValue (tw.``bg-black``, tw.``text-white``)
+
+    let winRateText =
+        winRate
+        |> Option.map formatWinRate
+        |> Option.defaultValue "N/A"
 
     section
         [ ClassNames
             [ tw.``col-span-1``
               tw.``row-span-1``
-              winRateBg
+              winRateBgColor
               tw.flex
               tw.``items-center``
               tw.``justify-center`` ] ]
-        [ div [ ClassNames [ tw.``text-center``; winRateText; tw.``leading-tight`` ] ]
+        [ div [ ClassNames [ tw.``text-center``; winRateTextColor; tw.``leading-tight`` ] ]
               [ h2 [ ClassName tw.``text-xl`` ] [ str "Win Rate" ]
-                p [ ClassName tw.``text-6xl`` ] [ formatWinRate winRate |> str ] ] ]
+                p [ ClassName tw.``text-6xl`` ] [ str winRateText ] ] ]
 
-let viewWn8Widget expectedValuesMap battles =
-    let wn8 = calculateWn8 expectedValuesMap battles
-    let winRateBg, winRateText = wn8Classes wn8
+let viewWn8Widget model =
+    let wn8 =
+        match model.ExpectedValues with
+        | Loaded expectedValuesMap -> calculateWn8 expectedValuesMap model.BattleResults
+        | _ -> None
+
+    let wn8BgColor, wn8TextColor =
+        wn8
+        |> Option.map wn8ColorClasses
+        |> Option.defaultValue (tw.``bg-black``, tw.``text-white``)
+
+    let wn8Text =
+        wn8
+        |> Option.map formatWn8
+        |> Option.defaultValue "N/A"
 
     section
         [ ClassNames
             [ tw.``col-span-1``
               tw.``row-span-1``
-              winRateBg
+              wn8BgColor
               tw.flex
               tw.``items-center``
               tw.``justify-center`` ] ]
-        [ div [ ClassNames [ tw.``text-center``; winRateText; tw.``leading-tight`` ] ]
+        [ div [ ClassNames [ tw.``text-center``; wn8TextColor; tw.``leading-tight`` ] ]
               [ h2 [ ClassName tw.``text-xl`` ] [ str "WN8" ]
-                p [ ClassName tw.``text-6xl`` ] [ formatWn8 wn8 |> str ] ] ]
+                p [ ClassName tw.``text-6xl`` ] [ str wn8Text ] ] ]
 
 let view model dispatch =
-    let randomBattles =
-        model.BattleResults
-        |> List.filter (fun battle ->
-            match battle.BonusType with
-            | RandomBattle -> true
-            | _ -> false)
-
-    let expectedValues =
-        match model.ExpectedValues with
-        | Loaded expectedValues -> expectedValues
-        | _ -> Map.empty
-
     fragment []
         [ viewStatusBar model dispatch
           header [ ClassNames [ tw.``bg-gray-900``; tw.``text-white``; tw.``p-2`` ] ]
@@ -228,8 +239,8 @@ let view model dispatch =
           main
               [ ClassNames
                   [ tw.grid; tw.``grid-flow-row-dense``; tw.``grid-rows-h-48``; tw.``grid-cols-fill-w-64`` ] ]
-              [ viewWinRateWidget randomBattles
-                viewWn8Widget expectedValues randomBattles ] ]
+              [ viewWinRateWidget model
+                viewWn8Widget model ] ]
 
 Program.mkProgram init update view
 |> Program.withReactBatched "elmish-app"

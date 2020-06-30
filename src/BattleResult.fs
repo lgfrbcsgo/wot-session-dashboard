@@ -75,3 +75,13 @@ type BattleResult =
             return { Outcome = outcome
                      BonusType = bonusType }
         }
+        
+    static member isVictory battle =
+        match battle.Outcome with
+        | Victory -> true
+        | DrawOrLoss -> false
+        
+    static member isRandomBattle battle =
+        match battle.BonusType with
+        | RandomBattle -> true
+        | _ -> false
