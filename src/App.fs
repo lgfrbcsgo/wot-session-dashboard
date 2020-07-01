@@ -241,6 +241,24 @@ let viewWn8Widget model =
               [ h2 [ ClassName tw.``text-xl`` ] [ str "WN8" ]
                 p [ ClassName tw.``text-6xl`` ] [ str wn8Text ] ] ]
 
+let viewNetCreditsWidget model =
+    let netCredits =
+        model.BattleResults
+        |> List.map BattleResult.getNetCredits
+        |> List.fold (+) 0
+
+    section
+        [ ClassNames
+            [ tw.``col-span-1``
+              tw.``row-span-1``
+              tw.``bg-white``
+              tw.flex
+              tw.``items-center``
+              tw.``justify-center`` ] ]
+        [ div [ ClassNames [ tw.``text-center``; tw.``text-black``; tw.``leading-tight`` ] ]
+              [ h2 [ ClassName tw.``text-xl`` ] [ str "Net Credits" ]
+                p [ ClassName tw.``text-6xl`` ] [ sprintf "%d" netCredits |> str ] ] ]
+
 let view model dispatch =
     fragment []
         [ viewStatusBar model dispatch
@@ -250,7 +268,8 @@ let view model dispatch =
               [ ClassNames
                   [ tw.grid; tw.``grid-flow-row-dense``; tw.``grid-rows-h-48``; tw.``grid-cols-fill-w-64`` ] ]
               [ viewWinRateWidget model
-                viewWn8Widget model ] ]
+                viewWn8Widget model
+                viewNetCreditsWidget model ] ]
 
 Program.mkProgram init update view
 |> Program.withReactBatched "elmish-app"
