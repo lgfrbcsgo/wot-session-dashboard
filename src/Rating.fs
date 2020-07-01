@@ -67,12 +67,7 @@ let calculateWinRate battles =
     match battles with
     | [] -> None
     | _ ->
-        let isVictory battle =
-            match battle.Outcome with
-            | Victory -> true
-            | DrawOrLoss -> false
-
-        let victories = List.filter isVictory battles
+        let victories = List.filter BattleResult.isVictory battles
         let winRate = float (List.length victories) / float (List.length battles)
         Some winRate
 
